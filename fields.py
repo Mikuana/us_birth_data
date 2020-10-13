@@ -6,6 +6,7 @@ class Field:
     field_name: str = None  # used to combine subclassed columns across files
     raw_type: RawType = None
     positions: dict = None
+    na_value = None
     labels = {}
 
     @classmethod
@@ -18,13 +19,12 @@ class Field:
 
     @classmethod
     def decode(cls, value):
-        return cls.labels.get(value, value)
+        v = cls.labels.get(value, value)
+        return None if v == cls.na_value else v
 
     @classmethod
     def parse_from_row(cls, file: PubFile, row: list):
         pos = cls.position(file)
-        if not pos:
-            return
         value = row[pos[0] - 1:pos[1]]
         value = cls.prep(value)
         value = cls.decode(value)
@@ -102,4 +102,79 @@ class OSTATE(STATE):
     positions = {
         Nat2003us: (30, 31),
         Nat2004us: (30, 31)
+    }
+
+
+class MonthOfBirth(Field):
+    """ Birth Month """
+
+    field_name = 'dob_month'
+    raw_type = Integer
+    positions = {
+        Nat1968: (32, 33)
+    }
+
+
+class BirthDateMonth(MonthOfBirth):
+    positions = {
+        x: (84, 85) for x in
+        (Nat1969, Nat1970, Nat1971, Nat1972, Nat1973, Nat1974, Nat1975, Nat1976, Nat1977, Nat1978, Nat1979, Nat1980,
+         Nat1981, Nat1982, Nat1983, Nat1984, Nat1985, Nat1986, Nat1987, Nat1988)
+    }
+
+
+class BirMon(MonthOfBirth):
+    positions = {
+        x: (172, 173) for x in
+        (
+            Nat1989, Nat1990, Nat1991, Nat1992, Nat1993, Nat1994, Nat1995us, Nat1996us, Nat1997us, Nat1998us, Nat1999us,
+            Nat2000us, Nat2001us, Nat2002us
+        )
+    }
+
+
+class DOB_MM(MonthOfBirth):
+    positions = {
+        x: (19, 20) for x in
+        (
+            Nat2003us, Nat2004us, Nat2005us, Nat2006us, Nat2007us, Nat2008us, Nat2009us, Nat2010us, Nat2011us,
+            Nat2012us, Nat2013us, Nat2014us, Nat2015us
+        )
+    }
+
+
+class DOB_MD(Field):
+    """ Birth Day of Month """
+
+    field_name = 'dob_day_of_month'
+    raw_type = Integer
+    na_value = 99
+    positions = {
+        x: (86, 87) for x in
+        (
+            Nat1969, Nat1970, Nat1971, Nat1972, Nat1973, Nat1974, Nat1975, Nat1976, Nat1977, Nat1978, Nat1979, Nat1980,
+            Nat1981, Nat1982, Nat1983, Nat1984, Nat1985, Nat1986, Nat1987, Nat1988
+        )
+    }
+
+
+class DOB_WK(Field):
+    """ Date of Birth Weekday """
+
+    field_name = 'dob_day_of_week'
+    raw_type = Integer
+    labels = {
+        1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday', 6: 'Friday', 7: 'Saturday'
+    }
+    positions = {
+        **{
+            x: (180, 180) for x in
+            (Nat1989, Nat1990, Nat1991, Nat1992, Nat1993, Nat1994, Nat1995us, Nat1996us, Nat1997us, Nat1998us,
+             Nat1999us, Nat2000us, Nat2001us, Nat2002us)
+        },
+        **{
+            x: (29, 29) for x in
+            (Nat2003us, Nat2004us, Nat2005us, Nat2006us, Nat2007us, Nat2008us, Nat2009us, Nat2010us,
+             Nat2011us, Nat2012us, Nat2013us, Nat2014us, Nat2015us)
+        },
     }
