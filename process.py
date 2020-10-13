@@ -1,5 +1,4 @@
 import gzip
-from pathlib import Path
 from typing import List
 
 import pandas as pd
@@ -7,9 +6,7 @@ from tqdm import tqdm
 
 import fields
 import files
-
-gzip_path = Path('gz')
-pq_path = Path('pq')
+from misc import *
 
 
 def extract_fields(field_list: List[fields.Field] = None):

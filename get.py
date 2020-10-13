@@ -2,14 +2,11 @@ import gzip
 import shutil
 import subprocess
 from ftplib import FTP
-from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from tqdm import tqdm
 
-zip_path = Path('zip')
-gzip_path = Path('gz')
-pdf_path = Path('pdf')
+from misc import *
 
 
 class FtpGet:

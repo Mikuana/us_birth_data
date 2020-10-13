@@ -1,13 +1,28 @@
-from pathlib import Path
+import pandas as pd
 
-zip_path = Path('zip')
-gzip_path = Path('gz')
-pdf_path = Path('pdf')
+from misc import *
+
+
+def get_years(year_from: int, year_to: int, columns: list = None):
+    df = pd.DataFrame()
+    years = YearData.__subclasses__()
+    for y in range(year_from, year_to + 1):
+        for yd in years:
+            if yd.year == y:
+                rd = yd.read_parquet(columns=columns)
+                df = rd if df.empty else pd.concat([df, rd])
+    return df
 
 
 class YearData:
     pub_file: str = None
     year: int = None
+
+    @classmethod
+    def read_parquet(cls, columns: list = None):
+        return pd.read_parquet(
+            Path(pq_path, f"{cls.__name__}.parquet"), columns=columns
+        )
 
 
 class Y1968(YearData):
