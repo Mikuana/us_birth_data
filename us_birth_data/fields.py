@@ -1,8 +1,8 @@
-from files import *
-from raw_type import *
+from us_birth_data.files import *
+from us_birth_data.raw_type import *
 
 
-class Field:
+class BaseField:
     field_name: str = None  # used to combine subclassed columns across files
     raw_type: RawType = None
     positions: dict = None
@@ -31,7 +31,7 @@ class Field:
         return value
 
 
-class RecordWeight(Field):
+class RecordWeight(BaseField):
     """ Record Weight """
 
     field_name = 'record_weight'
@@ -43,7 +43,7 @@ class RecordWeight(Field):
     }
 
 
-class State(Field):
+class State(BaseField):
     """ State of Occurrence """
 
     field_name = 'state'
@@ -97,7 +97,7 @@ class OccurrenceState(State):
     }
 
 
-class DobMonth(Field):
+class DobMonth(BaseField):
     """ Birth Month """
 
     field_name = 'dob_month'
@@ -123,7 +123,7 @@ class DobMonth(Field):
     }
 
 
-class DobDayOfMonth(Field):
+class DobDayOfMonth(BaseField):
     """ Birth Day of Month """
 
     field_name = 'dob_day_of_month'
@@ -138,7 +138,7 @@ class DobDayOfMonth(Field):
     }
 
 
-class DobDayOfWeek(Field):
+class DobDayOfWeek(BaseField):
     """ Date of Birth Weekday """
 
     field_name = 'dob_day_of_week'

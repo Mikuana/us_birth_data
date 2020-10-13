@@ -1,6 +1,6 @@
 import pandas as pd
 
-from misc import *
+from us_birth_data.misc import *
 
 
 def get_years(year_from: int, year_to: int, columns: list = None):
