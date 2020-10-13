@@ -3,6 +3,7 @@ from raw_type import *
 
 
 class Field:
+    field_name: str = None  # used to combine subclassed columns across files
     raw_type: RawType = None
     positions: dict = None
     labels = {}
@@ -22,6 +23,8 @@ class Field:
     @classmethod
     def parse_from_row(cls, file: PubFile, row: list):
         pos = cls.position(file)
+        if not pos:
+            return
         value = row[pos[0] - 1:pos[1]]
         value = cls.prep(value)
         value = cls.decode(value)
@@ -30,6 +33,8 @@ class Field:
 
 class RECWT(Field):
     """ Record Weight """
+
+    field_name = 'record_weight'
     raw_type = Integer
     positions = {
         x: (208, 208) for x in
@@ -41,6 +46,7 @@ class RECWT(Field):
 class STATE(Field):
     """ State of Occurrence """
 
+    field_name = 'state'
     raw_type = Integer
     labels = {
         1: 'Alabama', 2: 'Alaska', 3: 'Arizona', 4: 'Arkansas', 5: 'California', 6: 'Colorado', 7: 'Connecticut',
