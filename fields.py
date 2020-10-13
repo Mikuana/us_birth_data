@@ -31,7 +31,7 @@ class Field:
         return value
 
 
-class RECWT(Field):
+class RecordWeight(Field):
     """ Record Weight """
 
     field_name = 'record_weight'
@@ -43,7 +43,7 @@ class RECWT(Field):
     }
 
 
-class STATE(Field):
+class State(Field):
     """ State of Occurrence """
 
     field_name = 'state'
@@ -65,25 +65,15 @@ class STATE(Field):
             x: (28, 29) for x in
             (Nat1969, Nat1970, Nat1971, Nat1972, Nat1973, Nat1974, Nat1975, Nat1976, Nat1977,
              Nat1978, Nat1979, Nat1980, Nat1981, Nat1982)
-        }
-    }
-
-
-class StateOfOccurrence(STATE):
-    positions = {
+        },
         **{x: (28, 29) for x in (Nat1983, Nat1984, Nat1985, Nat1986, Nat1987, Nat1988)},
-        **{x: (16, 17) for x in (Nat1989, Nat1990, Nat1991, Nat1992, Nat1993)}
+        **{x: (16, 17) for x in (Nat1989, Nat1990, Nat1991, Nat1992, Nat1993)},
+        **{x: (16, 17) for x in
+           (Nat1994, Nat1995us, Nat1996us, Nat1997us, Nat1998us, Nat1999us, Nat2000us, Nat2001us, Nat2002us)}
     }
 
 
-class STATENAT(STATE):
-    positions = {
-        x: (16, 17) for x in
-        (Nat1994, Nat1995us, Nat1996us, Nat1997us, Nat1998us, Nat1999us, Nat2000us, Nat2001us, Nat2002us)
-    }
-
-
-class OSTATE(STATE):
+class OccurrenceState(State):
     raw_type = Character
     labels = {
         'AK': 'Alaska', 'AL': 'Alabama', 'AR': 'Arkansas', 'AZ': 'Arizona', 'CA': 'California', 'CO': 'Colorado',
@@ -105,45 +95,33 @@ class OSTATE(STATE):
     }
 
 
-class MonthOfBirth(Field):
+class DobMonth(Field):
     """ Birth Month """
 
     field_name = 'dob_month'
     raw_type = Integer
     positions = {
-        Nat1968: (32, 33)
+        Nat1968: (32, 33),
+        **{
+            x: (84, 85) for x in
+            (Nat1969, Nat1970, Nat1971, Nat1972, Nat1973, Nat1974, Nat1975, Nat1976, Nat1977, Nat1978, Nat1979, Nat1980,
+             Nat1981, Nat1982, Nat1983, Nat1984, Nat1985, Nat1986, Nat1987, Nat1988)
+        },
+        **{
+            x: (172, 173) for x in
+            (Nat1989, Nat1990, Nat1991, Nat1992, Nat1993, Nat1994, Nat1995us, Nat1996us, Nat1997us, Nat1998us,
+             Nat1999us, Nat2000us, Nat2001us, Nat2002us)
+        },
+        **{
+            x: (19, 20) for x in
+            (Nat2003us, Nat2004us, Nat2005us, Nat2006us, Nat2007us, Nat2008us, Nat2009us, Nat2010us, Nat2011us,
+             Nat2012us, Nat2013us, Nat2014us, Nat2015us)
+        }
+
     }
 
 
-class BirthDateMonth(MonthOfBirth):
-    positions = {
-        x: (84, 85) for x in
-        (Nat1969, Nat1970, Nat1971, Nat1972, Nat1973, Nat1974, Nat1975, Nat1976, Nat1977, Nat1978, Nat1979, Nat1980,
-         Nat1981, Nat1982, Nat1983, Nat1984, Nat1985, Nat1986, Nat1987, Nat1988)
-    }
-
-
-class BirMon(MonthOfBirth):
-    positions = {
-        x: (172, 173) for x in
-        (
-            Nat1989, Nat1990, Nat1991, Nat1992, Nat1993, Nat1994, Nat1995us, Nat1996us, Nat1997us, Nat1998us, Nat1999us,
-            Nat2000us, Nat2001us, Nat2002us
-        )
-    }
-
-
-class DOB_MM(MonthOfBirth):
-    positions = {
-        x: (19, 20) for x in
-        (
-            Nat2003us, Nat2004us, Nat2005us, Nat2006us, Nat2007us, Nat2008us, Nat2009us, Nat2010us, Nat2011us,
-            Nat2012us, Nat2013us, Nat2014us, Nat2015us
-        )
-    }
-
-
-class DOB_MD(Field):
+class DobDayOfMonth(Field):
     """ Birth Day of Month """
 
     field_name = 'dob_day_of_month'
@@ -158,7 +136,7 @@ class DOB_MD(Field):
     }
 
 
-class DOB_WK(Field):
+class DobDayOfWeek(Field):
     """ Date of Birth Weekday """
 
     field_name = 'dob_day_of_week'
