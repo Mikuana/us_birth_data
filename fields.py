@@ -10,7 +10,7 @@ class Field:
     labels = {}
 
     @classmethod
-    def position(cls, file: PubFile):
+    def position(cls, file: YearData):
         return cls.positions.get(file)
 
     @classmethod
@@ -23,7 +23,7 @@ class Field:
         return None if v == cls.na_value else v
 
     @classmethod
-    def parse_from_row(cls, file: PubFile, row: list):
+    def parse_from_row(cls, file: YearData, row: list):
         pos = cls.position(file)
         value = row[pos[0] - 1:pos[1]]
         value = cls.prep(value)
@@ -67,9 +67,11 @@ class State(Field):
              Y1978, Y1979, Y1980, Y1981, Y1982)
         },
         **{x: (28, 29) for x in (Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)},
-        **{x: (16, 17) for x in (Y1989, Y1990, Y1991, Y1992, Y1993)},
-        **{x: (16, 17) for x in
-           (Y1994, Y1995, Y1996, Y1997, Y1998, Y1999, Y2000, Y2001, Y2002)}
+        **{
+            x: (16, 17) for x in
+            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
+             Y1998, Y1999, Y2000, Y2001, Y2002)
+        },
     }
 
 
