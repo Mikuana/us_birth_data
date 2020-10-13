@@ -38,8 +38,8 @@ class RecordWeight(Field):
     raw_type = Integer
     positions = {
         x: (208, 208) for x in
-        (Nat1972, Nat1973, Nat1974, Nat1975, Nat1976, Nat1977, Nat1978, Nat1979,
-         Nat1980, Nat1981, Nat1982, Nat1983, Nat1984)
+        (Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979,
+         Y1980, Y1981, Y1982, Y1983, Y1984)
     }
 
 
@@ -60,16 +60,16 @@ class State(Field):
         50: 'Wisconsin', 51: 'Wyoming', 52: 'Puerto Rico', 53: 'Virgin Islands', 54: 'Guam'
     }
     positions = {
-        Nat1968: (74, 75),
+        Y1968: (74, 75),
         **{
             x: (28, 29) for x in
-            (Nat1969, Nat1970, Nat1971, Nat1972, Nat1973, Nat1974, Nat1975, Nat1976, Nat1977,
-             Nat1978, Nat1979, Nat1980, Nat1981, Nat1982)
+            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977,
+             Y1978, Y1979, Y1980, Y1981, Y1982)
         },
-        **{x: (28, 29) for x in (Nat1983, Nat1984, Nat1985, Nat1986, Nat1987, Nat1988)},
-        **{x: (16, 17) for x in (Nat1989, Nat1990, Nat1991, Nat1992, Nat1993)},
+        **{x: (28, 29) for x in (Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)},
+        **{x: (16, 17) for x in (Y1989, Y1990, Y1991, Y1992, Y1993)},
         **{x: (16, 17) for x in
-           (Nat1994, Nat1995us, Nat1996us, Nat1997us, Nat1998us, Nat1999us, Nat2000us, Nat2001us, Nat2002us)}
+           (Y1994, Y1995, Y1996, Y1997, Y1998, Y1999, Y2000, Y2001, Y2002)}
     }
 
 
@@ -90,8 +90,8 @@ class OccurrenceState(State):
     }
 
     positions = {
-        Nat2003us: (30, 31),
-        Nat2004us: (30, 31)
+        Y2003: (30, 31),
+        Y2004: (30, 31)
     }
 
 
@@ -101,21 +101,21 @@ class DobMonth(Field):
     field_name = 'dob_month'
     raw_type = Integer
     positions = {
-        Nat1968: (32, 33),
+        Y1968: (32, 33),
         **{
             x: (84, 85) for x in
-            (Nat1969, Nat1970, Nat1971, Nat1972, Nat1973, Nat1974, Nat1975, Nat1976, Nat1977, Nat1978, Nat1979, Nat1980,
-             Nat1981, Nat1982, Nat1983, Nat1984, Nat1985, Nat1986, Nat1987, Nat1988)
+            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979, Y1980,
+             Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
         },
         **{
             x: (172, 173) for x in
-            (Nat1989, Nat1990, Nat1991, Nat1992, Nat1993, Nat1994, Nat1995us, Nat1996us, Nat1997us, Nat1998us,
-             Nat1999us, Nat2000us, Nat2001us, Nat2002us)
+            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
+             Y1999, Y2000, Y2001, Y2002)
         },
         **{
             x: (19, 20) for x in
-            (Nat2003us, Nat2004us, Nat2005us, Nat2006us, Nat2007us, Nat2008us, Nat2009us, Nat2010us, Nat2011us,
-             Nat2012us, Nat2013us, Nat2014us, Nat2015us)
+            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011,
+             Y2012, Y2013, Y2014, Y2015)
         }
 
     }
@@ -130,8 +130,8 @@ class DobDayOfMonth(Field):
     positions = {
         x: (86, 87) for x in
         (
-            Nat1969, Nat1970, Nat1971, Nat1972, Nat1973, Nat1974, Nat1975, Nat1976, Nat1977, Nat1978, Nat1979, Nat1980,
-            Nat1981, Nat1982, Nat1983, Nat1984, Nat1985, Nat1986, Nat1987, Nat1988
+            Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979, Y1980,
+            Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988
         )
     }
 
@@ -147,12 +147,12 @@ class DobDayOfWeek(Field):
     positions = {
         **{
             x: (180, 180) for x in
-            (Nat1989, Nat1990, Nat1991, Nat1992, Nat1993, Nat1994, Nat1995us, Nat1996us, Nat1997us, Nat1998us,
-             Nat1999us, Nat2000us, Nat2001us, Nat2002us)
+            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
+             Y1999, Y2000, Y2001, Y2002)
         },
         **{
             x: (29, 29) for x in
-            (Nat2003us, Nat2004us, Nat2005us, Nat2006us, Nat2007us, Nat2008us, Nat2009us, Nat2010us,
-             Nat2011us, Nat2012us, Nat2013us, Nat2014us, Nat2015us)
+            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010,
+             Y2011, Y2012, Y2013, Y2014, Y2015)
         },
     }
