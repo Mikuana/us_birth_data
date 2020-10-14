@@ -3,17 +3,6 @@ import pandas as pd
 from us_birth_data.misc import *
 
 
-def get_years(year_from: int, year_to: int, columns: list = None):
-    df = pd.DataFrame()
-    years = YearData.__subclasses__()
-    for y in range(year_from, year_to + 1):
-        for yd in years:
-            if yd.year == y:
-                rd = yd.read_parquet(columns=columns)
-                df = rd if df.empty else pd.concat([df, rd])
-    return df
-
-
 class YearData:
     pub_file: str = None
     year: int = None

@@ -9,6 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from us_birth_data import fields, files
+from us_birth_data.files import YearData
 from us_birth_data.misc import *
 from us_birth_data.misc import gzip_path, pq_path
 
@@ -111,11 +112,33 @@ def stage_pq(field_list: List[fields.BaseField] = None):
 
         new_keys = [x.field_name for x in fd.keys()]
         fd = dict(zip(new_keys, fd.values()))
-        df = pd.DataFrame.from_dict(fd, dtype="category")
+        df = pd.DataFrame.from_dict(fd)
 
+        # field additions
         df['dob_year'] = file.year
 
+        if 'record_weight' in df:
+            df['record_weight'] = df['record_weight'].fillna(1)
+        elif file.year < 1972:
+            df['record_weight'] = 2
+        else:
+            df['record_weight'] = 1
+
+        cl = df.columns.tolist()
+        cl.remove('record_weight')
+        df = df.groupby(cl, as_index=False)['record_weight'].sum()
+
         df.to_parquet(Path(pq_path, f"{file.__name__}.parquet"))
+
+
+def get_years(year_from=1968, year_to=2019, columns: list = None):
+    df = pd.DataFrame()
+    years = YearData.__subclasses__()
+    for yd in years:
+        if year_from <= yd.year <= year_to:
+            rd = yd.read_parquet(columns=columns)
+            df = rd if df.empty else pd.concat([df, rd])
+    return df
 
 
 if __name__ == '__main__':
