@@ -4,6 +4,7 @@ zip/
 gz/
 pdf/
 pq/
+doc/
 
 # JetBrains idea
 .idea/

@@ -161,3 +161,99 @@ class DobDayOfWeek(BaseField):
         Y2014: (23, 23),
         Y2015: (23, 23)
     }
+
+
+class UmeField(BaseField):
+    raw_type = Integer
+    labels = {
+        1: "Yes", 2: "No", 8: "Not on Certificate", 9: "Unknown or Not Stated"
+    }
+
+
+class UmeVaginal(UmeField):
+    """ Vaginal method of delivery """
+    field_name = 'delivery_vaginal'
+
+    positions = {
+        **{
+            x: (217, 217) for x in
+            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
+             Y1998, Y1999, Y2000, Y2001, Y2002)
+        },
+        **{
+            x: (395, 395) for x in
+            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
+        }
+    }
+
+
+class UmeVBAC(UmeField):
+    """ Vaginal birth after previous cesarean """
+    field_name = 'delivery_vbac'
+
+    positions = {
+        **{
+            x: (218, 218) for x in
+            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
+             Y1998, Y1999, Y2000, Y2001, Y2002)
+        },
+        **{
+            x: (396, 396) for x in
+            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
+        }
+    }
+
+
+class UmePrimaryCesarean(UmeField):
+    """  Primary cesarean section """
+    field_name = 'delivery_cesarean_primary'
+
+    positions = {
+        **{
+            x: (219, 219) for x in
+            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
+             Y1998, Y1999, Y2000, Y2001, Y2002)
+        },
+        **{
+            x: (397, 397) for x in
+            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
+        }
+    }
+
+
+class UmeRepeatCesarean(UmeField):
+    """ Repeat cesarean section """
+    field_name = 'delivery_cesarean_repeat'
+
+    positions = {
+        **{
+            x: (220, 220) for x in
+            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
+             Y1998, Y1999, Y2000, Y2001, Y2002)
+        },
+        **{
+            x: (398, 398) for x in
+            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
+        }
+    }
+
+
+class FinalRouteMethod(BaseField):
+    """ Final Route & Method of Delivery """
+    field_name = 'delivery_route_method'
+
+    raw_type = Integer
+    labels = {
+        1: "Spontaneous", 2: "Forceps", 3: "Vacuum", 4: "Cesarean", 9: "Unknown or not stated"
+    }
+
+    positions = {
+        **{
+            x: (393, 393) for x in
+            (Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011, Y2012, Y2013)
+        },
+        **{
+            x: (402, 402) for x in
+            (Y2014, Y2015)
+        }
+    }

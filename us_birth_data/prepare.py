@@ -97,7 +97,15 @@ def get_queue():
 
 
 def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.BaseField] = None):
-    field_list = field_list or fields.BaseField.__subclasses__()
+    default_fields = (
+        fields.RecordWeight,
+        fields.State,
+        fields.OccurrenceState,
+        fields.DobMonth,
+        fields.DobDayOfMonth,
+        fields.DobDayOfWeek
+    )
+    field_list = field_list or default_fields
     for file in files.YearData.__subclasses__():
         if year_from <= file.year <= year_to:
             with gzip.GzipFile(Path(gzip_path, file.pub_file)) as r:
@@ -174,8 +182,8 @@ if __name__ == '__main__':
     #     zf = get_data_set(q)
     #     zip_convert(zf)
 
-    # stage_pq(year_from=1969, year_to=1971)
+    stage_pq()
 
     dfx = get_years()
     print(dfx)
-    dfx.to_parquet('us_birth_data/data/4.parquet')
+    dfx.to_parquet('us_birth_data/data/5.parquet')
