@@ -155,7 +155,7 @@ def get_years(year_from=1968, year_to=2019, columns: list = None):
 
     # type casting
     tc = {
-        'dob_year': 'uint8',
+        'dob_year': 'uint16',
         'dob_month': 'uint8',
         'dob_day_of_week': weekday_type,
         'state': 'category',
