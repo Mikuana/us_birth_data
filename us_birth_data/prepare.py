@@ -1,3 +1,4 @@
+from datetime import date
 import gzip
 import shutil
 import subprocess
@@ -95,40 +96,41 @@ def get_queue():
     return queue
 
 
-def stage_pq(field_list: List[fields.BaseField] = None):
+def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.BaseField] = None):
     field_list = field_list or fields.BaseField.__subclasses__()
     for file in files.YearData.__subclasses__():
-        with gzip.GzipFile(Path(gzip_path, file.pub_file)) as r:
-            print(f"Counting rows in {file.pub_file}")
-            total = sum(1 for _ in r)
-            print(f"{total} rows")
+        if year_from <= file.year <= year_to:
+            with gzip.GzipFile(Path(gzip_path, file.pub_file)) as r:
+                print(f"Counting rows in {file.pub_file}")
+                total = sum(1 for _ in r)
+                print(f"{total} rows")
 
-        fd = {x: [] for x in field_list if x.position(file)}
-        with gzip.GzipFile(Path(gzip_path, file.pub_file)) as r:
-            for line in tqdm(r, total=total):
-                if not line.isspace():
-                    for k, v in fd.items():
-                        fd[k].append(k.parse_from_row(file, line))
+            fd = {x: [] for x in field_list if x.position(file)}
+            with gzip.GzipFile(Path(gzip_path, file.pub_file)) as r:
+                for line in tqdm(r, total=total):
+                    if not line.isspace():
+                        for k, v in fd.items():
+                            fd[k].append(k.parse_from_row(file, line))
 
-        new_keys = [x.field_name for x in fd.keys()]
-        fd = dict(zip(new_keys, fd.values()))
-        df = pd.DataFrame.from_dict(fd)
+            new_keys = [x.field_name for x in fd.keys()]
+            fd = dict(zip(new_keys, fd.values()))
+            df = pd.DataFrame.from_dict(fd)
 
-        # field additions
-        df['dob_year'] = file.year
+            # field additions
+            df['dob_year'] = file.year
 
-        if 'record_weight' in df:
-            df['record_weight'] = df['record_weight'].fillna(1)
-        elif file.year < 1972:
-            df['record_weight'] = 2
-        else:
-            df['record_weight'] = 1
+            if 'record_weight' in df:
+                df['record_weight'] = df['record_weight'].fillna(1)
+            elif file.year < 1972:
+                df['record_weight'] = 2
+            else:
+                df['record_weight'] = 1
 
-        cl = df.columns.tolist()
-        cl.remove('record_weight')
-        df = df.groupby(cl, as_index=False)['record_weight'].sum()
+            cl = df.columns.tolist()
+            cl.remove('record_weight')
+            df = df.groupby(cl, as_index=False)['record_weight'].sum()
 
-        df.to_parquet(Path(pq_path, f"{file.__name__}.parquet"))
+            df.to_parquet(Path(pq_path, f"{file.__name__}.parquet"))
 
 
 def get_years(year_from=1968, year_to=2019, columns: list = None):
@@ -137,7 +139,30 @@ def get_years(year_from=1968, year_to=2019, columns: list = None):
     for yd in years:
         if year_from <= yd.year <= year_to:
             rd = yd.read_parquet(columns=columns)
+
+            if 'dob_day_of_week' not in rd and 'dob_day_of_month' in rd:
+                rdt = rd[['dob_year', 'dob_month', 'dob_day_of_month']]
+                rdt.columns = ['year', 'month', 'day']
+                rd['dob_day_of_week'] = pd.to_datetime(rdt, errors='coerce').dt.strftime('%A')
+
             df = rd if df.empty else pd.concat([df, rd])
+
+    # weekday ordering
+    weekday_type = pd.api.types.CategoricalDtype(
+        categories=['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        ordered=True
+    )
+
+    # type casting
+    tc = {
+        'dob_year': 'uint8',
+        'dob_month': 'uint8',
+        'dob_day_of_week': weekday_type,
+        'state': 'category',
+        'record_weight': 'uint32'
+    }
+    df = df.astype(tc)
+    df = df[list(tc.keys())]
     return df
 
 
@@ -149,4 +174,8 @@ if __name__ == '__main__':
     #     zf = get_data_set(q)
     #     zip_convert(zf)
 
-    stage_pq()
+    # stage_pq(year_from=1969, year_to=1971)
+
+    dfx = get_years()
+    print(dfx)
+    dfx.to_parquet('us_birth_data/data/4.parquet')

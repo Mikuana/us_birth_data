@@ -1,3 +1,4 @@
+from us_birth_data.prepare import get_years
 from pathlib import Path
 
 import pandas as pd
