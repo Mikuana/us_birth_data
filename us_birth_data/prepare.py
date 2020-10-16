@@ -182,8 +182,8 @@ if __name__ == '__main__':
     #     zf = get_data_set(q)
     #     zip_convert(zf)
 
-    stage_pq()
+    stage_pq(2003, 2004)
 
     dfx = get_years()
     print(dfx)
-    dfx.to_parquet('us_birth_data/data/5.parquet')
+    dfx.to_parquet('us_birth_data/data/usb.parquet')

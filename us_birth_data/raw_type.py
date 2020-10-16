@@ -19,7 +19,7 @@ class Boolean(RawType):
 class Character(RawType):
     @staticmethod
     def handler(x):
-        return '' if x[0] == ' ' else '"{}"'.format(x)
+        return x.strip()
 
 
 class Numeric(RawType):
