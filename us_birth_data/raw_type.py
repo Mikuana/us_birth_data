@@ -19,7 +19,7 @@ class Boolean(RawType):
 class Character(RawType):
     @staticmethod
     def handler(x):
-        return x.strip()
+        return x.decode('utf-8')
 
 
 class Numeric(RawType):

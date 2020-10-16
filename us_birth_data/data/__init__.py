@@ -33,7 +33,7 @@ class RecordWeight(Column):
 
 def get_data(columns: List[Column] = None):
     rw = RecordWeight.name()
-    p = Path(Path(__file__).parent, '5.parquet')
+    p = Path(Path(__file__).parent, 'usb.parquet')
     if columns:  # derive column names and add record weight if not already present
         columns = [c.name() for c in columns]
         if rw not in columns:
