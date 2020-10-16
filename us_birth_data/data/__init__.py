@@ -14,21 +14,34 @@ class Column:
 class DobYear(Column):
     """ Birth Year """
 
+    type = 'uint16'
+
 
 class DobMonth(Column):
     """ Birth Month"""
+
+    type = 'uint8'
 
 
 class DobDayOfWeek(Column):
     """ Birth Day of Week """
 
+    type = pd.api.types.CategoricalDtype(
+        categories=['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        ordered=True
+    )
+
 
 class State(Column):
     """ State of Occurrence """
 
+    type = 'category'
+
 
 class RecordWeight(Column):
     """ Record Weight """
+
+    type = 'uint32'
 
 
 def get_data(columns: List[Column] = None):

@@ -1,4 +1,3 @@
-from datetime import date
 import gzip
 import shutil
 import subprocess
@@ -9,6 +8,7 @@ from typing import List
 import pandas as pd
 from tqdm import tqdm
 
+from us_birth_data import data
 from us_birth_data import fields, files
 from us_birth_data.files import YearData
 from us_birth_data.misc import *
@@ -125,18 +125,18 @@ def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.BaseField] = 
             df = pd.DataFrame.from_dict(fd)
 
             # field additions
-            df['dob_year'] = file.year
+            df[data.DobYear.name()] = file.year
 
-            if 'record_weight' in df:
-                df['record_weight'] = df['record_weight'].fillna(1)
+            if data.RecordWeight.name() in df:
+                df[data.RecordWeight.name()] = df[data.RecordWeight.name()].fillna(1)
             elif file.year < 1972:
-                df['record_weight'] = 2
+                df[data.RecordWeight.name()] = 2
             else:
-                df['record_weight'] = 1
+                df[data.RecordWeight.name()] = 1
 
             cl = df.columns.tolist()
-            cl.remove('record_weight')
-            df = df.groupby(cl, as_index=False)['record_weight'].sum()
+            cl.remove(data.RecordWeight.name())
+            df = df.groupby(cl, as_index=False)[data.RecordWeight.name()].sum()
 
             df.to_parquet(Path(pq_path, f"{file.__name__}.parquet"))
 
@@ -148,26 +148,16 @@ def get_years(year_from=1968, year_to=2019, columns: list = None):
         if year_from <= yd.year <= year_to:
             rd = yd.read_parquet(columns=columns)
 
-            if 'dob_day_of_week' not in rd and 'dob_day_of_month' in rd:
-                rdt = rd[['dob_year', 'dob_month', 'dob_day_of_month']]
+            if fields.DobMonth.field_name not in rd and fields.DobDayOfMonth.field_name in rd:
+                rdt = rd[[data.DobYear.name(), fields.DobMonth.field_name, fields.DobDayOfMonth.field_name]]
                 rdt.columns = ['year', 'month', 'day']
-                rd['dob_day_of_week'] = pd.to_datetime(rdt, errors='coerce').dt.strftime('%A')
+                rd[fields.DobDayOfWeek.field_name] = pd.to_datetime(rdt, errors='coerce').dt.strftime('%A')
 
             df = rd if df.empty else pd.concat([df, rd])
 
-    # weekday ordering
-    weekday_type = pd.api.types.CategoricalDtype(
-        categories=['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-        ordered=True
-    )
-
-    # type casting
     tc = {
-        'dob_year': 'uint16',
-        'dob_month': 'uint8',
-        'dob_day_of_week': weekday_type,
-        'state': 'category',
-        'record_weight': 'uint32'
+        x.name(): x.type for x in
+        (data.DobYear, data.DobMonth, data.DobDayOfWeek, data.State, data.RecordWeight)
     }
     df = df.astype(tc)
     df = df[list(tc.keys())]
