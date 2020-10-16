@@ -125,18 +125,18 @@ def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.BaseField] = 
             df = pd.DataFrame.from_dict(fd)
 
             # field additions
-            df[data.DobYear.name()] = file.year
+            df[data.Year.name()] = file.year
 
-            if data.RecordWeight.name() in df:
-                df[data.RecordWeight.name()] = df[data.RecordWeight.name()].fillna(1)
+            if data.Births.name() in df:
+                df[data.Births.name()] = df[data.Births.name()].fillna(1)
             elif file.year < 1972:
-                df[data.RecordWeight.name()] = 2
+                df[data.Births.name()] = 2
             else:
-                df[data.RecordWeight.name()] = 1
+                df[data.Births.name()] = 1
 
             cl = df.columns.tolist()
-            cl.remove(data.RecordWeight.name())
-            df = df.groupby(cl, as_index=False)[data.RecordWeight.name()].sum()
+            cl.remove(data.Births.name())
+            df = df.groupby(cl, as_index=False)[data.Births.name()].sum()
 
             df.to_parquet(Path(pq_path, f"{file.__name__}.parquet"))
 
@@ -149,18 +149,18 @@ def get_years(year_from=1968, year_to=2019, columns: list = None):
             rd = yd.read_parquet(columns=columns)
 
             if fields.DobMonth.field_name not in rd and fields.DobDayOfMonth.field_name in rd:
-                rdt = rd[[data.DobYear.name(), fields.DobMonth.field_name, fields.DobDayOfMonth.field_name]]
-                rdt.columns = ['year', 'month', 'day']
-                rd[fields.DobDayOfWeek.field_name] = pd.to_datetime(rdt, errors='coerce').dt.strftime('%A')
+                rd[fields.DobDayOfWeek.field_name] = pd.to_datetime(
+                    rd[['year', 'month', 'day']], errors='coerce'
+                ).dt.strftime('%A')
 
             df = rd if df.empty else pd.concat([df, rd])
 
     tc = {
         x.name(): x.type for x in
-        (data.DobYear, data.DobMonth, data.DobDayOfWeek, data.State, data.RecordWeight)
+        (data.Year, data.Month, data.DayOfWeek, data.State, data.Births)
     }
     df = df.astype(tc)
-    df = df[list(tc.keys())]
+    df = df[list(tc.keys())]  # reorder columns
     return df
 
 
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     #     zf = get_data_set(q)
     #     zip_convert(zf)
 
-    stage_pq(2003, 2004)
+    stage_pq()
 
     dfx = get_years()
     print(dfx)

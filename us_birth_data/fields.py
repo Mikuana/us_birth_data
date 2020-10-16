@@ -1,5 +1,6 @@
 from us_birth_data.files import *
 from us_birth_data.raw_type import *
+from us_birth_data import data
 
 
 class BaseField:
@@ -34,7 +35,7 @@ class BaseField:
 class RecordWeight(BaseField):
     """ Record Weight """
 
-    field_name = 'record_weight'
+    field_name = data.Births.name()
     raw_type = Integer
     positions = {
         x: (208, 208) for x in
@@ -46,7 +47,7 @@ class RecordWeight(BaseField):
 class State(BaseField):
     """ State of Occurrence """
 
-    field_name = 'state'
+    field_name = data.State.name()
     raw_type = Integer
     labels = {
         1: 'Alabama', 2: 'Alaska', 3: 'Arizona', 4: 'Arkansas', 5: 'California', 6: 'Colorado', 7: 'Connecticut',
@@ -100,7 +101,7 @@ class OccurrenceState(State):
 class DobMonth(BaseField):
     """ Birth Month """
 
-    field_name = 'dob_month'
+    field_name = data.Month.name()
     raw_type = Integer
     positions = {
         Y1968: (32, 33),
@@ -127,7 +128,7 @@ class DobMonth(BaseField):
 class DobDayOfMonth(BaseField):
     """ Birth Day of Month """
 
-    field_name = 'dob_day_of_month'
+    field_name = 'day'
     raw_type = Integer
     na_value = 99
     positions = {
@@ -142,7 +143,7 @@ class DobDayOfMonth(BaseField):
 class DobDayOfWeek(BaseField):
     """ Date of Birth Weekday """
 
-    field_name = 'dob_day_of_week'
+    field_name = data.DayOfWeek.name()
     raw_type = Integer
     labels = {
         1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday', 6: 'Friday', 7: 'Saturday'

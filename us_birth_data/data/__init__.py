@@ -11,19 +11,19 @@ class Column:
         return re.sub(r'(?<!^)(?=[A-Z])', '_', cls.__name__).lower()
 
 
-class DobYear(Column):
+class Year(Column):
     """ Birth Year """
 
     type = 'uint16'
 
 
-class DobMonth(Column):
+class Month(Column):
     """ Birth Month"""
 
     type = 'uint8'
 
 
-class DobDayOfWeek(Column):
+class DayOfWeek(Column):
     """ Birth Day of Week """
 
     type = pd.api.types.CategoricalDtype(
@@ -38,27 +38,24 @@ class State(Column):
     type = 'category'
 
 
-class RecordWeight(Column):
+class Births(Column):
     """ Record Weight """
 
     type = 'uint32'
 
 
 def get_data(columns: List[Column] = None):
-    rw = RecordWeight.name()
+    n = Births.name()
     p = Path(Path(__file__).parent, 'usb.parquet')
     if columns:  # derive column names and add record weight if not already present
         columns = [c.name() for c in columns]
-        if rw not in columns:
-            columns += [rw]
+        if n not in columns:
+            columns += [n]
 
     df = pd.read_parquet(p.as_posix(), columns=columns)
-
-    cl = df.columns.tolist()
-    cl.remove(rw)
-    df = df.groupby(cl, as_index=False)[rw].sum()
+    df = df.groupby([x for x in df.columns.tolist() if x != n], as_index=False)[n].sum()
     return df
 
 
 if __name__ == '__main__':
-    print(get_data([State]))
+    print(get_data())
