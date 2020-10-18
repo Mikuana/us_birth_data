@@ -2,6 +2,7 @@ import gzip
 import shutil
 import subprocess
 from ftplib import FTP
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List
 
@@ -10,8 +11,9 @@ from tqdm import tqdm
 
 from us_birth_data import fields, files
 from us_birth_data.files import YearData
-from us_birth_data.misc import *
-from us_birth_data.misc import gzip_path, pq_path
+
+gzip_path = Path('gz')
+pq_path = Path('pq')
 
 
 class FtpGet:
@@ -54,21 +56,16 @@ class FtpGet:
         self.get_file(file_name, destination)
 
 
-def get_data_set(file_name):
-    target = Path(zip_path, file_name)
-    if target.exists():
-        print(f"Already exists skipping download for: {target}")
-    else:
-        with TemporaryDirectory() as td:
-            with FtpGet() as ftp:
-                file_path = Path(td, file_name)
-                ftp.get_data_set(file_name, file_path.parent)
-                file_path.rename(Path(zip_path, file_path.name))
-    return target
-
-
 def zip_convert(zip_file):
-    """ Unzip file, recompress pub file as gz, then remove zip """
+    """
+    Unzip file, recompress pub file as gz
+
+    Requires 7zip to be installed so that it can be called as `7z` by a subprocess.
+
+    Note: we can't use the built-in unzip package in python as some of the files
+    we need to inflate are compressed using algorithms which python is not licensed
+    to use.
+    """
     print(f"Convert to gzip: {zip_file}")
     with TemporaryDirectory() as td:
         subprocess.check_output(['7z', 'x', zip_file, '-o' + Path(td).as_posix()])
@@ -81,6 +78,14 @@ def zip_convert(zip_file):
                 shutil.copyfileobj(f_in, f_out)
 
     zip_file.unlink()
+
+
+def stage_gzip(file_name):
+    with TemporaryDirectory() as td:
+        with FtpGet() as ftp:
+            file_path = Path(td, file_name)
+            ftp.get_data_set(file_name, file_path.parent)
+        zip_convert(file_path)
 
 
 def get_queue():
@@ -160,16 +165,10 @@ def get_years(year_from=1968, year_to=2019, columns: list = None):
 
 
 if __name__ == '__main__':
-    # pq_path.mkdir(exist_ok=True)
-    # zip_path.mkdir(exist_ok=True)
-    # gzip_path.mkdir(exist_ok=True)
-    #
-    # for q in get_queue():
-    #     zf = get_data_set(q)
-    #     zip_convert(zf)
+    gzip_path.mkdir(exist_ok=True)
+    pq_path.mkdir(exist_ok=True)
 
-    stage_pq(1969, 1988)
+    for q in get_queue():
+        stage_gzip(q)
 
-    dfx = get_years()
-    print(dfx)
-    dfx.to_parquet('us_birth_data/data/usb.parquet')
+    stage_pq()

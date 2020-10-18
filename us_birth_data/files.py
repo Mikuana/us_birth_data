@@ -1,6 +1,6 @@
-import pandas as pd
+from pathlib import Path
 
-from us_birth_data.misc import *
+import pandas as pd
 
 
 class YearData:
@@ -10,7 +10,7 @@ class YearData:
     @classmethod
     def read_parquet(cls, columns: list = None):
         return pd.read_parquet(
-            Path(pq_path, f"{cls.__name__}.parquet"), columns=columns
+            Path('pq', f"{cls.__name__}.parquet"), columns=columns
         )
 
 

@@ -1,10 +1,7 @@
-US Birth Data?
+US Birth Data
 ===========================
 
-This python package provides a set of tools to solve several of the major challenges
-that arise in the transmission of data. These tools attempt to solve four main
-problems:
-
+...
 
 Installation
 ############
