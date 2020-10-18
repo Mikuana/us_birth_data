@@ -8,7 +8,6 @@ from typing import List
 import pandas as pd
 from tqdm import tqdm
 
-from us_birth_data import data
 from us_birth_data import fields, files
 from us_birth_data.files import YearData
 from us_birth_data.misc import *
@@ -38,10 +37,10 @@ class FtpGet:
         print(f"Starting download of {file_name}")
         with p.open('wb') as f:
             with tqdm(total=total) as progress_bar:
-                def cb(data):
-                    data_length = len(data)
+                def cb(chunk):
+                    data_length = len(chunk)
                     progress_bar.update(data_length)
-                    f.write(data)
+                    f.write(chunk)
 
                 self.ftp.retrbinary(f'RETR {file_name}', cb)
         return p
@@ -96,14 +95,10 @@ def get_queue():
     return queue
 
 
-def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.BaseField] = None):
+def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.OriginalColumn] = None):
     default_fields = (
-        fields.RecordWeight,
-        fields.State,
-        fields.OccurrenceState,
-        fields.DobMonth,
-        fields.DobDayOfMonth,
-        fields.DobDayOfWeek
+        fields.Births, fields.State, fields.OccurrenceState, fields.Month,
+        fields.Day, fields.DayOfWeek
     )
     field_list = field_list or default_fields
     for file in files.YearData.__subclasses__():
@@ -120,24 +115,22 @@ def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.BaseField] = 
                         for k, v in fd.items():
                             fd[k].append(k.parse_from_row(file, line))
 
-            new_keys = [x.field_name for x in fd.keys()]
+            new_keys = [x.name() for x in fd.keys()]
             fd = dict(zip(new_keys, fd.values()))
             df = pd.DataFrame.from_dict(fd)
 
             # field additions
-            df[data.Year.name()] = file.year
+            df[fields.Year.name()] = file.year
 
-            if data.Births.name() in df:
-                df[data.Births.name()] = df[data.Births.name()].fillna(1)
+            n = fields.Births.name()
+            if n in df:
+                df[n] = df[n].fillna(1)
             elif file.year < 1972:
-                df[data.Births.name()] = 2
+                df[n] = 2
             else:
-                df[data.Births.name()] = 1
+                df[n] = 1
 
-            cl = df.columns.tolist()
-            cl.remove(data.Births.name())
-            df = df.groupby(cl, as_index=False)[data.Births.name()].sum()
-
+            df = df.groupby([x for x in df.columns.tolist() if x != n], as_index=False)[n].sum()
             df.to_parquet(Path(pq_path, f"{file.__name__}.parquet"))
 
 
@@ -148,16 +141,18 @@ def get_years(year_from=1968, year_to=2019, columns: list = None):
         if year_from <= yd.year <= year_to:
             rd = yd.read_parquet(columns=columns)
 
-            if fields.DobMonth.field_name not in rd and fields.DobDayOfMonth.field_name in rd:
-                rd[fields.DobDayOfWeek.field_name] = pd.to_datetime(
+            if fields.DayOfWeek.name() not in rd and fields.Day.name() in rd:
+                rd[fields.DayOfWeek.name()] = pd.to_datetime(
                     rd[['year', 'month', 'day']], errors='coerce'
                 ).dt.strftime('%A')
+                print(rd.day_of_week)
 
             df = rd if df.empty else pd.concat([df, rd])
 
+    print(df.day_of_week)
     tc = {
-        x.name(): x.type for x in
-        (data.Year, data.Month, data.DayOfWeek, data.State, data.Births)
+        x.name(): x.pd_type for x in
+        (fields.Year, fields.Month, fields.DayOfWeek, fields.State, fields.Births)
     }
     df = df.astype(tc)
     df = df[list(tc.keys())]  # reorder columns
@@ -165,6 +160,7 @@ def get_years(year_from=1968, year_to=2019, columns: list = None):
 
 
 if __name__ == '__main__':
+    # pq_path.mkdir(exist_ok=True)
     # zip_path.mkdir(exist_ok=True)
     # gzip_path.mkdir(exist_ok=True)
     #
@@ -172,7 +168,7 @@ if __name__ == '__main__':
     #     zf = get_data_set(q)
     #     zip_convert(zf)
 
-    stage_pq()
+    stage_pq(1969, 1988)
 
     dfx = get_years()
     print(dfx)

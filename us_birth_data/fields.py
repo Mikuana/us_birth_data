@@ -1,10 +1,27 @@
+import calendar
+import re
+
 from us_birth_data.files import *
 from us_birth_data.raw_type import *
-from us_birth_data import data
+
+calendar.setfirstweekday(calendar.SUNDAY)
 
 
-class BaseField:
-    field_name: str = None  # used to combine subclassed columns across files
+class Column:
+    pd_type: str = None
+
+    @classmethod
+    def name(cls):
+        return re.sub(r'(?<!^)(?=[A-Z])', '_', cls.__name__).lower()
+
+
+class Year(Column):
+    """ Birth Year """
+
+    pd_type = 'uint16'
+
+
+class OriginalColumn(Column):
     raw_type: RawType = None
     positions: dict = None
     na_value = None
@@ -32,10 +49,10 @@ class BaseField:
         return value
 
 
-class RecordWeight(BaseField):
-    """ Record Weight """
+class Births(OriginalColumn):
+    """ Number of births """
 
-    field_name = data.Births.name()
+    pd_type = 'uint32'
     raw_type = Integer
     positions = {
         x: (208, 208) for x in
@@ -44,10 +61,10 @@ class RecordWeight(BaseField):
     }
 
 
-class State(BaseField):
+class State(OriginalColumn):
     """ State of Occurrence """
 
-    field_name = data.State.name()
+    pd_type = 'category'
     raw_type = Integer
     labels = {
         1: 'Alabama', 2: 'Alaska', 3: 'Arizona', 4: 'Arkansas', 5: 'California', 6: 'Colorado', 7: 'Connecticut',
@@ -98,11 +115,12 @@ class OccurrenceState(State):
     }
 
 
-class DobMonth(BaseField):
+class Month(OriginalColumn):
     """ Birth Month """
 
-    field_name = data.Month.name()
     raw_type = Integer
+    labels = {ix: x for ix, x in enumerate(calendar.month_name) if x}
+    pd_type = pd.api.types.CategoricalDtype(categories=list(labels.values()), ordered=True)
     positions = {
         Y1968: (32, 33),
         **{
@@ -125,10 +143,9 @@ class DobMonth(BaseField):
     }
 
 
-class DobDayOfMonth(BaseField):
+class Day(OriginalColumn):
     """ Birth Day of Month """
 
-    field_name = 'day'
     raw_type = Integer
     na_value = 99
     positions = {
@@ -140,14 +157,16 @@ class DobDayOfMonth(BaseField):
     }
 
 
-class DobDayOfWeek(BaseField):
+class DayOfWeek(OriginalColumn):
     """ Date of Birth Weekday """
 
-    field_name = data.DayOfWeek.name()
-    raw_type = Integer
     labels = {
-        1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday', 6: 'Friday', 7: 'Saturday'
+        1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday',
+        6: 'Friday', 7: 'Saturday'
     }
+    pd_type = pd.api.types.CategoricalDtype(categories=list(labels.values()), ordered=True)
+    raw_type = Integer
+
     positions = {
         **{
             x: (180, 180) for x in
@@ -164,16 +183,15 @@ class DobDayOfWeek(BaseField):
     }
 
 
-class UmeField(BaseField):
+class UmeColumn(OriginalColumn):
     raw_type = Integer
     labels = {
         1: "Yes", 2: "No", 8: "Not on Certificate", 9: "Unknown or Not Stated"
     }
 
 
-class UmeVaginal(UmeField):
+class UmeVaginal(UmeColumn):
     """ Vaginal method of delivery """
-    field_name = 'delivery_vaginal'
 
     positions = {
         **{
@@ -188,9 +206,8 @@ class UmeVaginal(UmeField):
     }
 
 
-class UmeVBAC(UmeField):
+class UmeVBAC(UmeColumn):
     """ Vaginal birth after previous cesarean """
-    field_name = 'delivery_vbac'
 
     positions = {
         **{
@@ -205,9 +222,8 @@ class UmeVBAC(UmeField):
     }
 
 
-class UmePrimaryCesarean(UmeField):
+class UmePrimaryCesarean(UmeColumn):
     """  Primary cesarean section """
-    field_name = 'delivery_cesarean_primary'
 
     positions = {
         **{
@@ -222,9 +238,8 @@ class UmePrimaryCesarean(UmeField):
     }
 
 
-class UmeRepeatCesarean(UmeField):
+class UmeRepeatCesarean(UmeColumn):
     """ Repeat cesarean section """
-    field_name = 'delivery_cesarean_repeat'
 
     positions = {
         **{
@@ -239,9 +254,8 @@ class UmeRepeatCesarean(UmeField):
     }
 
 
-class FinalRouteMethod(BaseField):
+class FinalRouteMethod(OriginalColumn):
     """ Final Route & Method of Delivery """
-    field_name = 'delivery_route_method'
 
     raw_type = Integer
     labels = {
