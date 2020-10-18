@@ -18,7 +18,7 @@ import us_birth_data
 
 # -- Project information -----------------------------------------------------
 
-project = 'us_birth_daata'
+project = 'us_birth_data'
 copyright = '2020, Christopher Boyd'
 author = 'Christopher Boyd'
 
