@@ -2,9 +2,29 @@ import calendar
 import re
 
 from us_birth_data.files import *
-from us_birth_data.raw_type import *
 
-calendar.setfirstweekday(calendar.SUNDAY)
+
+class Handlers:
+    @staticmethod
+    def integer(x):
+        return int(x)
+
+    @staticmethod
+    def boolean(x):
+        return '' if x == ' ' else str(x)
+
+    @staticmethod
+    def character(x):
+        return x.decode('utf-8')
+
+    @staticmethod
+    def numeric(x):
+        return '' if x[0] == ' ' else str(round(float(x), ndigits=1))
+
+    # noinspection PyUnusedLocal
+    @staticmethod
+    def ignore(x):
+        return ''
 
 
 class Column:
@@ -22,7 +42,7 @@ class Year(Column):
 
 
 class OriginalColumn(Column):
-    raw_type: RawType = None
+    handler = None
     positions: dict = None
     na_value = None
     labels = {}
@@ -33,7 +53,7 @@ class OriginalColumn(Column):
 
     @classmethod
     def prep(cls, value: str):
-        return cls.raw_type.handler(value)
+        return cls.handler(value)
 
     @classmethod
     def decode(cls, value):
@@ -53,7 +73,7 @@ class Births(OriginalColumn):
     """ Number of births """
 
     pd_type = 'uint32'
-    raw_type = Integer
+    handler = Handlers.integer
     positions = {
         x: (208, 208) for x in
         (Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979,
@@ -65,7 +85,7 @@ class State(OriginalColumn):
     """ State of Occurrence """
 
     pd_type = 'category'
-    raw_type = Integer
+    handler = Handlers.integer
     labels = {
         1: 'Alabama', 2: 'Alaska', 3: 'Arizona', 4: 'Arkansas', 5: 'California', 6: 'Colorado', 7: 'Connecticut',
         8: 'Delaware', 9: 'District of Columbia', 10: 'Florida', 11: 'Georgia', 12: 'Hawaii', 13: 'Idaho',
@@ -94,7 +114,7 @@ class State(OriginalColumn):
 
 
 class OccurrenceState(State):
-    raw_type = Character
+    handler = Handlers.integer
     labels = {
         'AK': 'Alaska', 'AL': 'Alabama', 'AR': 'Arkansas', 'AZ': 'Arizona', 'CA': 'California', 'CO': 'Colorado',
         'CT': 'Connecticut', 'DE': 'Delaware', 'DC': 'District of Columbia', 'FL': 'Florida', 'GA': 'Georgia',
@@ -118,7 +138,7 @@ class OccurrenceState(State):
 class Month(OriginalColumn):
     """ Birth Month """
 
-    raw_type = Integer
+    handler = Handlers.integer
     labels = {ix: x for ix, x in enumerate(calendar.month_name) if x}
     pd_type = pd.api.types.CategoricalDtype(categories=list(labels.values()), ordered=True)
     positions = {
@@ -146,7 +166,7 @@ class Month(OriginalColumn):
 class Day(OriginalColumn):
     """ Birth Day of Month """
 
-    raw_type = Integer
+    handler = Handlers.integer
     na_value = 99
     positions = {
         x: (86, 87) for x in
@@ -165,7 +185,7 @@ class DayOfWeek(OriginalColumn):
         6: 'Friday', 7: 'Saturday'
     }
     pd_type = pd.api.types.CategoricalDtype(categories=list(labels.values()), ordered=True)
-    raw_type = Integer
+    handler = Handlers.integer
 
     positions = {
         **{
@@ -184,7 +204,7 @@ class DayOfWeek(OriginalColumn):
 
 
 class UmeColumn(OriginalColumn):
-    raw_type = Integer
+    handler = Handlers.integer
     labels = {
         1: "Yes", 2: "No", 8: "Not on Certificate", 9: "Unknown or Not Stated"
     }
@@ -257,7 +277,7 @@ class UmeRepeatCesarean(UmeColumn):
 class FinalRouteMethod(OriginalColumn):
     """ Final Route & Method of Delivery """
 
-    raw_type = Integer
+    handler = Handlers.integer
     labels = {
         1: "Spontaneous", 2: "Forceps", 3: "Vacuum", 4: "Cesarean", 9: "Unknown or not stated"
     }

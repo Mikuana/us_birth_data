@@ -168,7 +168,7 @@ if __name__ == '__main__':
     gzip_path.mkdir(exist_ok=True)
     pq_path.mkdir(exist_ok=True)
 
-    for q in get_queue():
-        stage_gzip(q)
+    # for q in get_queue():
+    #     stage_gzip(q)
 
-    stage_pq()
+    stage_pq(1968, 1968)
