@@ -139,7 +139,7 @@ def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.OriginalColum
             df.to_parquet(Path(pq_path, f"{file.__name__}.parquet"))
 
 
-def get_years(year_from=1968, year_to=2019, columns: list = None):
+def concatenate_years(year_from=1968, year_to=2015, columns: list = None):
     df = pd.DataFrame()
     years = YearData.__subclasses__()
     for yd in years:
@@ -150,11 +150,9 @@ def get_years(year_from=1968, year_to=2019, columns: list = None):
                 rd[fields.DayOfWeek.name()] = pd.to_datetime(
                     rd[['year', 'month', 'day']], errors='coerce'
                 ).dt.strftime('%A')
-                print(rd.day_of_week)
 
             df = rd if df.empty else pd.concat([df, rd])
 
-    print(df.day_of_week)
     tc = {
         x.name(): x.pd_type for x in
         (fields.Year, fields.Month, fields.DayOfWeek, fields.State, fields.Births)
@@ -164,11 +162,13 @@ def get_years(year_from=1968, year_to=2019, columns: list = None):
     return df
 
 
-if __name__ == '__main__':
+def generate_data_set():
     gzip_path.mkdir(exist_ok=True)
     pq_path.mkdir(exist_ok=True)
 
-    # for q in get_queue():
-    #     stage_gzip(q)
+    for q in get_queue():
+        stage_gzip(q)
 
-    stage_pq(1968, 1968)
+    stage_pq()
+    df = concatenate_years()
+    df.to_parquet(Path(Path(__file__).parent, 'us_birth_data.parquet'))

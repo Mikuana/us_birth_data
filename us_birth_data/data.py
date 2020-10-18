@@ -8,7 +8,7 @@ from us_birth_data.fields import Column, Month, DayOfWeek, Births
 
 def get_data(columns: List[Column] = None):
     n = Births.name()
-    p = Path(Path(__file__).parent, 'usb.parquet')
+    p = Path(Path(__file__).parent, 'us_birth_data.parquet')
     if columns:  # add birth count if not already present
         columns = [c.name() for c in columns]
         if n not in columns:
@@ -20,7 +20,3 @@ def get_data(columns: List[Column] = None):
         df = pd.read_parquet(p.as_posix())
 
     return df
-
-
-if __name__ == '__main__':
-    print(get_data([DayOfWeek]))
