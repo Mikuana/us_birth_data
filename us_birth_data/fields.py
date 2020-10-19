@@ -23,7 +23,11 @@ class Column:
 
 
 class Year(Column):
-    """ Birth Year """
+    """
+    Birth Year
+
+
+    """
 
     pd_type = 'uint16'
 
@@ -57,7 +61,21 @@ class OriginalColumn(Column):
 
 
 class Births(OriginalColumn):
-    """ Number of births """
+    """
+    Number of births
+
+    An integer representing the number of birth records that are represented by
+    the combination of dimensions that are present in a particular record of the
+    births data set. All math that is performed on this data set should be weighted
+    by this value.
+
+    From 1968 to 1971, the number of records is calculated assuming a 50% sample
+    rate (i.e. each record counts for 2 births), per the documentation. From 1972
+    to 1984, and explicit record weight column was introduced, which indicates the
+    appropriate weighting of records; some states used a 50% sample, and some
+    reported all records. After 1984, the data are reported without weighting, and
+    each record is counted as a single birth.
+    """
 
     pd_type = 'uint32'
     handler = Handlers.integer
@@ -69,7 +87,13 @@ class Births(OriginalColumn):
 
 
 class State(OriginalColumn):
-    """ State of Occurrence """
+    """
+    State of Occurrence
+
+    From 1968 to 2004 the data sets included the state (or territory) where
+    the birth occurred. After 2004, state of occurrence is no longer included. This
+    field includes all 50 states, and the District of Columbia (i.e. Washington D.C.).
+    """
 
     pd_type = 'category'
     handler = Handlers.integer
