@@ -3,7 +3,7 @@ from typing import List
 
 import pandas as pd
 
-from us_birth_data.fields import Column, Month, DayOfWeek, Births
+from us_birth_data.fields import Column, Year, Month, DayOfWeek, State, Births
 
 
 def get_data(columns: List[Column] = None):

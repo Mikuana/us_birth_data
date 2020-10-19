@@ -15,7 +15,7 @@ from distutils.version import LooseVersion
 
 def read_version():
     try:
-        v = [x for x in Path('rumydata/__init__.py').open() if x.startswith('__version__')][0]
+        v = [x for x in Path('us_birth_data/__init__.py').open() if x.startswith('__version__')][0]
         v = re.match(r"__version__ *= *'(.*?)'\n", v)[1]
         return v
     except Exception as e:
