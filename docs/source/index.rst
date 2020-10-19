@@ -21,6 +21,14 @@ third-party package dependencies. However, some extras are available.
    self
    example
 
+Use
+###
+
+Do this::
+
+    import us_birth_data as usb
+    usb.get_data()
+
 Data
 ####
 
