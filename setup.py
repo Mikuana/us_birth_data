@@ -17,7 +17,7 @@ setuptools.setup(
     name="us_birth_data",
     version=read_version(),
     author="Christopher Boyd",
-    description="A python package which makes longitudinal use of US birth data convenient",
+    description="A pre-processed longitudinal aggregate table of NVSS birth data in the US from 1968 onward",
     long_description_content_type="text/markdown",
     url="https://github.com/Mikuana/us_birth_data",
     long_description=Path('README.md').read_text(),
