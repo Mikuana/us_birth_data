@@ -6,7 +6,7 @@ import pandas as pd
 from us_birth_data.fields import Column, Births
 
 
-def get_data(columns: List[Column] = None):
+def load_data(columns: List[Column] = None):
     """ This has a doc string now """
     n = Births.name()
     p = Path(Path(__file__).parent, 'us_birth_data.parquet')
