@@ -21,6 +21,13 @@ third-party package dependencies. However, some extras are available.
    self
    example
 
+Data
+####
+
+.. automodule:: us_birth_data
+    :members:
+    :show-inheritance:
+
 
 Indices and tables
 ==================

@@ -7,6 +7,7 @@ from us_birth_data.fields import Column, Year, Month, DayOfWeek, State, Births
 
 
 def get_data(columns: List[Column] = None):
+    """ This has a doc string now """
     n = Births.name()
     p = Path(Path(__file__).parent, 'us_birth_data.parquet')
     if columns:  # add birth count if not already present
