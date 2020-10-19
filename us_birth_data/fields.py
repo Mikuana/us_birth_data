@@ -114,7 +114,7 @@ class State(OriginalColumn):
 
 
 class OccurrenceState(State):
-    handler = Handlers.integer
+    handler = Handlers.character
     labels = {
         'AK': 'Alaska', 'AL': 'Alabama', 'AR': 'Arkansas', 'AZ': 'Arizona', 'CA': 'California', 'CO': 'Colorado',
         'CT': 'Connecticut', 'DE': 'Delaware', 'DC': 'District of Columbia', 'FL': 'Florida', 'GA': 'Georgia',
