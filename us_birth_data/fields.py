@@ -5,6 +5,7 @@ from us_birth_data.files import *
 
 
 class Handlers:
+    """ Raw value handlers """
     @staticmethod
     def integer(x):
         return int(x)
@@ -15,6 +16,7 @@ class Handlers:
 
 
 class Column:
+    """ Base Column class """
     pd_type: str = None
 
     @classmethod
@@ -26,7 +28,9 @@ class Year(Column):
     """
     Birth Year
 
-
+    And integer describing the year that the birth occurred. Although this is not
+    explicitly included in the raw data sets, it is implied by the year that the
+    data set represents.
     """
 
     pd_type = 'uint16'
@@ -189,7 +193,11 @@ class Day(OriginalColumn):
 
 
 class DayOfWeek(OriginalColumn):
-    """ Date of Birth Weekday """
+    """
+    Date of Birth Weekday
+
+    TODO: 'Unknowns'
+    """
 
     labels = {
         1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday',

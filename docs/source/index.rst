@@ -2,10 +2,10 @@ US Birth Data
 ===========================
 
 This package simplifies the analysis of official birth records maintained by the
-[National Vital Statistics System](https://www.cdc.gov/nchs/nvss/births.htm) (NVSS).
+`National Vital Statistics System <https://www.cdc.gov/nchs/nvss/births.htm>`_ (NVSS).
 It does this by aggregating a limited set of common attributes across all years
 that the data are available, then storing the resulting data set in the highly
-compressed [parquet](https://parquet.apache.org/) format, which is small enough
+compressed `parquet <https://parquet.apache.org/>`_ format, which is small enough
 that it can be included as part of this package.
 
 
@@ -78,13 +78,23 @@ of the load by skipping the unwanted columns during reading. ::
     575  2015   December  336576
     [576 rows x 3 columns]
 
-Objects
-#######
+Definitions
+###########
 
 .. automodule:: us_birth_data
     :members:
     :show-inheritance:
 
+
+Resources
+#########
+
+The links below provide reference to useful resources when working with NVSS birth
+data.
+
+ - `National Center for Health Statistics Vital Statistics Online <https://www.cdc.gov/nchs/data_access/vitalstatsonline.htm>`_
+ - `National Bureau of Economic Research <http://data.nber.org/data/vital-statistics-natality-data.html>`_
+ - `Vital Statistics <https://github.com/Mikuana/vitalstatistics>`_ an R project precursor to this python package
 
 Indices and tables
 ==================
