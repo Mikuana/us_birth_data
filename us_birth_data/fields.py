@@ -10,21 +10,8 @@ class Handlers:
         return int(x)
 
     @staticmethod
-    def boolean(x):
-        return '' if x == ' ' else str(x)
-
-    @staticmethod
     def character(x):
         return x.decode('utf-8')
-
-    @staticmethod
-    def numeric(x):
-        return '' if x[0] == ' ' else str(round(float(x), ndigits=1))
-
-    # noinspection PyUnusedLocal
-    @staticmethod
-    def ignore(x):
-        return ''
 
 
 class Column:

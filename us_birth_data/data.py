@@ -1,16 +1,18 @@
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import pandas as pd
 
 from us_birth_data.fields import Column, Births
 
 
-def load_data(columns: List[Column] = None):
+def load_data(columns: Tuple[Column, List[Column]] = None):
     """ This has a doc string now """
     n = Births.name()
     p = Path(Path(__file__).parent, 'us_birth_data.parquet')
     if columns:  # add birth count if not already present
+        if not isinstance(columns, list):
+            columns = [columns]
         columns = [c.name() for c in columns]
         if n not in columns:
             columns += [n]
