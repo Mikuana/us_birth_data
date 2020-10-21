@@ -108,13 +108,13 @@ def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.OriginalColum
     field_list = field_list or default_fields
     for file in files.YearData.__subclasses__():
         if year_from <= file.year <= year_to:
-            with gzip.GzipFile(Path(gzip_path, file.pub_file)) as r:
+            with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:
                 print(f"Counting rows in {file.pub_file}")
                 total = sum(1 for _ in r)
                 print(f"{total} rows")
 
             fd = {x: [] for x in field_list if x.position(file)}
-            with gzip.GzipFile(Path(gzip_path, file.pub_file)) as r:
+            with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:
                 for line in tqdm(r, total=total):
                     if not line.isspace():
                         for k, v in fd.items():

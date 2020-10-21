@@ -1,4 +1,3 @@
-import calendar
 import re
 
 from us_birth_data.files import *
@@ -6,13 +5,14 @@ from us_birth_data.files import *
 
 class Handlers:
     """ Raw value handlers """
+
     @staticmethod
     def integer(x):
         return int(x)
 
     @staticmethod
     def character(x):
-        return x.decode('utf-8')
+        return x
 
 
 class Column:
@@ -53,7 +53,10 @@ class OriginalColumn(Column):
     @classmethod
     def decode(cls, value):
         v = cls.labels.get(value, value)
-        return None if v == cls.na_value else v
+        v = None if v == cls.na_value else v
+        if not v and 'Unknown' in cls.labels.values():
+            v = 'Unknown'
+        return v
 
     @classmethod
     def parse_from_row(cls, file: YearData, row: list):
@@ -110,7 +113,8 @@ class State(OriginalColumn):
         33: 'New York', 34: 'North Carolina', 35: 'North Dakota', 36: 'Ohio', 37: 'Oklahoma', 38: 'Oregon',
         39: 'Pennsylvania', 40: 'Rhode Island', 41: 'South Carolina', 42: 'South Dakota', 43: 'Tennessee',
         44: 'Texas', 45: 'Utah', 46: 'Vermont', 47: 'Virginia', 48: 'Washington', 49: 'West Virginia',
-        50: 'Wisconsin', 51: 'Wyoming', 52: 'Puerto Rico', 53: 'Virgin Islands', 54: 'Guam'
+        50: 'Wisconsin', 51: 'Wyoming', 52: 'Puerto Rico', 53: 'Virgin Islands', 54: 'Guam',
+        99: 'Unknown'
     }
     positions = {
         Y1968: (74, 75),
@@ -141,7 +145,8 @@ class OccurrenceState(State):
         'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina', 'SD': 'South Dakota',
         'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VA': 'Virginia', 'VT': 'Vermont', 'WA': 'Washington',
         'WI': 'Wisconsin', 'WV': 'West Virginia', 'WY': 'Wyoming', 'AS': 'American Samoa', 'GU': 'Guam',
-        'MP': 'Northern Marianas', 'PR': 'Puerto Rico', 'VI': 'Virgin Islands'
+        'MP': 'Northern Marianas', 'PR': 'Puerto Rico', 'VI': 'Virgin Islands',
+        'XX': 'Unknown'
     }
 
     positions = {
@@ -154,7 +159,11 @@ class Month(OriginalColumn):
     """ Birth Month """
 
     handler = Handlers.integer
-    labels = {ix: x for ix, x in enumerate(calendar.month_name) if x}
+    labels = {
+        1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May', 6: 'June',
+        7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November',
+        12: 'December', 99: 'Unknown'
+    }
     pd_type = pd.api.types.CategoricalDtype(categories=list(labels.values()), ordered=True)
     positions = {
         Y1968: (32, 33),
@@ -201,7 +210,7 @@ class DayOfWeek(OriginalColumn):
 
     labels = {
         1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday',
-        6: 'Friday', 7: 'Saturday'
+        6: 'Friday', 7: 'Saturday', 99: 'Unknown'
     }
     pd_type = pd.api.types.CategoricalDtype(categories=list(labels.values()), ordered=True)
     handler = Handlers.integer
@@ -225,7 +234,8 @@ class DayOfWeek(OriginalColumn):
 class UmeColumn(OriginalColumn):
     handler = Handlers.integer
     labels = {
-        1: "Yes", 2: "No", 8: "Not on Certificate", 9: "Unknown or Not Stated"
+        1: "Yes", 2: "No", 8: "Not on Certificate", 9: "Unknown or Not Stated",
+        99: 'Unknown'
     }
 
 
@@ -298,7 +308,8 @@ class FinalRouteMethod(OriginalColumn):
 
     handler = Handlers.integer
     labels = {
-        1: "Spontaneous", 2: "Forceps", 3: "Vacuum", 4: "Cesarean", 9: "Unknown or not stated"
+        1: "Spontaneous", 2: "Forceps", 3: "Vacuum", 4: "Cesarean", 9: "Unknown or not stated",
+        99: 'Unknown'
     }
 
     positions = {

@@ -28,7 +28,7 @@ setuptools.setup(
     ],
     python_requires=">=3.8",
     install_requires=[
-      'pandas',
+      'pandas>=1.1',
       'pyarrow'
     ],
     extras_require={

@@ -1,12 +1,12 @@
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Union
 
 import pandas as pd
 
 from us_birth_data.fields import Column, Births
 
 
-def load_data(columns: Tuple[Column, List[Column]] = None) -> pd.DataFrame:
+def load_data(columns: Union[Column, List[Column]] = None) -> pd.DataFrame:
     """
     Load Birth Data
 
@@ -22,15 +22,26 @@ def load_data(columns: Tuple[Column, List[Column]] = None) -> pd.DataFrame:
     n = Births.name()
     p = Path(Path(__file__).parent, 'us_birth_data.parquet')
     if columns:  # add birth count if not already present
-        if isinstance(columns, Column):
+        if not isinstance(columns, list):
             columns = [columns]
         columns = [c.name() for c in columns]
         if n not in columns:
             columns += [n]
 
-        df = pd.read_parquet(p.as_posix(), columns=columns)
-        df = df.groupby([x for x in df.columns.to_list() if x != n], as_index=False)[n].sum()
+        df = pd.read_parquet(p.as_posix(), columns=columns).fillna('Unknown')
+        cl = [x for x in df.columns.to_list() if x != n]
+        df = df.groupby(by=cl, as_index=False).sum()
+        df = df[df[n] != 0]
     else:
         df = pd.read_parquet(p.as_posix())
 
     return df
+
+
+if __name__ == '__main__':
+    from us_birth_data import fields
+
+    df = load_data([fields.Month, fields.DayOfWeek])
+    print(
+        df[df['births'].isna()]
+    )
