@@ -28,20 +28,10 @@ def load_data(columns: Union[Column, List[Column]] = None) -> pd.DataFrame:
         if n not in columns:
             columns += [n]
 
-        df = pd.read_parquet(p.as_posix(), columns=columns).fillna('Unknown')
+        df = pd.read_parquet(p.as_posix(), columns=columns)
         cl = [x for x in df.columns.to_list() if x != n]
         df = df.groupby(by=cl, as_index=False).sum()
-        df = df[df[n] != 0]
     else:
         df = pd.read_parquet(p.as_posix())
 
     return df
-
-
-if __name__ == '__main__':
-    from us_birth_data import fields
-
-    df = load_data([fields.Month, fields.DayOfWeek])
-    print(
-        df[df['births'].isna()]
-    )

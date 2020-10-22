@@ -159,6 +159,11 @@ def concatenate_years(year_from=1968, year_to=2015, columns: list = None) -> pd.
     }
     df = df.astype(tc)
     df = df[list(tc.keys())]  # reorder columns
+
+    cat_cols = df.columns[[isinstance(x, pd.CategoricalDtype) for x in df.dtypes]]
+    for cc in cat_cols:
+        df[cc] = df[cc].cat.remove_unused_categories()
+
     return df
 
 
