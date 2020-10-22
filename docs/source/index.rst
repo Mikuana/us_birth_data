@@ -86,6 +86,34 @@ Definitions
     :show-inheritance:
 
 
+Why
+###
+
+The birth records are quite comprehensive, and go back to 1968. However, longitudinal
+analysis of these records is challenging. The data sets have gone through numerous
+schema changes over the decades. Some information that used to be available is no
+longer included in the public data sets (e.g. state of occurrence), some new information
+has been added (e.g delivery method), and many of the fields have undergone transformations
+over time (e.g. place of delivery used to include "En route or born on arrival (BOA)",
+but this value was dropped from the records in 1988). None of this is terribly
+problematic when analysis is performed on only one or two years of records, but
+spanning the entire length of these data sets requires complex processing.
+
+The raw birth certificate data exceed 5 GB when _compressed_. Simultaneous
+decompression of these data is problematic on the typical workstation, and even after
+aggressive pruning of columns, loading hundreds of millions of records directly
+into memory will overflow most workstations.
+
+This issue is solved via a multi-step data processing pipeline that incrementally
+decompresses the raw birth record data, prunes columns, and then reduces rows through
+aggregation of grouped records. The years are then combined, with additional logic
+to map similar attributes to consistent values over time. The result is a data set
+which can easily be shared, but still rich enough to perform meaningful analysis.
+
+Most attributes of the birth data are excluded. If you need additional detail, you
+can use this package to generate your own data sets.
+
+
 Resources
 #########
 
