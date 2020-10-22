@@ -1,7 +1,7 @@
 # US Birth Data
 
 [![PyPI](https://img.shields.io/pypi/v/us_birth_data)](https://pypi.org/project/us_birth_data/)
-[![Documentation Status](https://readthedocs.org/projects/us_birth_data/badge/?version=stable)](https://us_birth_data.readthedocs.io/en/stable/?badge=stable)
+[![Documentation Status](https://readthedocs.org/projects/us_birth_data/badge/?version=latest)](https://us_birth_data.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/Mikuana/us_birth_data/branch/main/graph/badge.svg)](https://codecov.io/gh/Mikuana/us_birth_data)
 
 This package simplifies the analysis of official birth records maintained by the
