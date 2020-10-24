@@ -7,6 +7,13 @@ from us_birth_data.files import YearData
 original_columns = recurse_subclasses(fields.OriginalColumn)
 
 
+class Xyz(fields.OriginalColumn):
+    handler = fields.Handlers.integer
+    positions = {YearData: (1, 2)}
+    na_value = 9
+    labels = {1: 'x', 99: 'Unknown'}
+
+
 @pytest.mark.parametrize('raw,processed', [
     ('01', 1),
     ('1', 1)
@@ -30,10 +37,16 @@ def test_snake_name():
 
 
 def test_position_map():
-    class Xyz(fields.OriginalColumn):
-        positions = {YearData: (0, 1)}
+    assert Xyz.position(YearData) == (1, 2)
 
-    assert Xyz.position(YearData) == (0, 1)
+
+def test_decode():
+    assert Xyz.decode(1) == 'x'
+    assert Xyz.decode(9) == 'Unknown'
+
+
+def test_parse_from_row():
+    assert Xyz.parse_from_row(YearData, '0123456789') == 'x'
 
 
 @pytest.mark.parametrize('column', original_columns)
