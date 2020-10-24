@@ -202,11 +202,7 @@ class Day(OriginalColumn):
 
 
 class DayOfWeek(OriginalColumn):
-    """
-    Date of Birth Weekday
-
-    TODO: 'Unknowns'
-    """
+    """ Date of Birth Weekday """
 
     labels = {
         1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday',
