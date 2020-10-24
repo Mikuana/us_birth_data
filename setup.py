@@ -33,7 +33,10 @@ setuptools.setup(
     ],
     extras_require={
         'Prep': ['tqdm'],
-        'Testing': ['pytest', 'pytest-mock', 'pytest-cov']
+        'Testing': [
+            'pytest', 'pytest-mock', 'pytest-cov',
+            'rumydata>=0.5.2'
+        ]
     },
     packages=setuptools.find_packages(),
     include_package_data=True
