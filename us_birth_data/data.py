@@ -5,6 +5,8 @@ import pandas as pd
 
 from us_birth_data.fields import Column, Births
 
+data_path = Path(Path(__file__).parent, 'us_birth_data.parquet')
+
 
 def load_data(columns: Union[Column, List[Column]] = None) -> pd.DataFrame:
     """
@@ -20,7 +22,6 @@ def load_data(columns: Union[Column, List[Column]] = None) -> pd.DataFrame:
     :return: a pandas.DataFrame containing birth data
     """
     n = Births.name()
-    p = Path(Path(__file__).parent, 'us_birth_data.parquet')
     if columns:  # add birth count if not already present
         if not isinstance(columns, list):
             columns = [columns]
