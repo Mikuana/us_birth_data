@@ -27,6 +27,11 @@ def test_valid_pub_file(year, pub_file_pat):
 
 
 @pytest.mark.parametrize('year', years)
+def test_births_total(year):
+    assert year.births > 0
+
+
+@pytest.mark.parametrize('year', years)
 def test_unique_year(year):
     fys = [x.year for x in years]
     assert fys.count(year.year) == 1, "year is not unique"
