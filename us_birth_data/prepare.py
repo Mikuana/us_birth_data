@@ -139,7 +139,7 @@ def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.OriginalColum
             df.to_parquet(Path(pq_path, f"{file.__name__}.parquet"))
 
 
-def concatenate_years(year_from=1968, year_to=2015, columns: list = None) -> pd.DataFrame:
+def concatenate_years(year_from=0, year_to=9999, columns: list = None) -> pd.DataFrame:
     df = pd.DataFrame()
     years = YearData.__subclasses__()
     for yd in years:
