@@ -8,10 +8,16 @@ from rumydata.rules.cell import make_static_cell_rule
 
 from us_birth_data import Year, Month, DayOfWeek, State, Births
 from us_birth_data.data import data_path, load_data
+from us_birth_data import files
 
 gt0 = make_static_cell_rule(lambda x: int(x) > 0, 'greater than 0')
 after1968 = make_static_cell_rule(lambda x: int(x) >= 1968, '1968 is earliest available data')
 no_future = make_static_cell_rule(lambda x: int(x) <= date.today().year, 'must be past or present year')
+
+
+@pytest.fixture
+def loaded_data():
+    yield load_data()
 
 
 @pytest.mark.slow
@@ -40,3 +46,8 @@ def test_data_frame_shape():
     df = load_data()
     assert df.shape[0] >= 40
     assert df[Births.name()].sum() >= int(183e6)
+
+
+@pytest.mark.parametrize('year', files.YearData.__subclasses__())
+def test_year_counts(year, loaded_data):
+    assert loaded_data[loaded_data['year'] == year.year]['births'].sum()
