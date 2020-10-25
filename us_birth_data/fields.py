@@ -1,5 +1,7 @@
 import re
 
+from pandas.api.types import CategoricalDtype
+
 from us_birth_data.files import *
 
 
@@ -8,7 +10,7 @@ class Handlers:
 
     @staticmethod
     def integer(x):
-        return int(x)
+        return int(x) if x.strip() else None
 
     @staticmethod
     def character(x):
@@ -164,7 +166,7 @@ class Month(OriginalColumn):
         7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November',
         12: 'December', 99: 'Unknown'
     }
-    pd_type = pd.api.types.CategoricalDtype(categories=list(labels.values()), ordered=True)
+    pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
     positions = {
         Y1968: (32, 33),
         **{
@@ -210,7 +212,7 @@ class DayOfWeek(OriginalColumn):
         1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday',
         6: 'Friday', 7: 'Saturday', 99: 'Unknown'
     }
-    pd_type = pd.api.types.CategoricalDtype(categories=list(labels.values()), ordered=True)
+    pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
     handler = Handlers.integer
 
     positions = {
@@ -233,10 +235,8 @@ class DayOfWeek(OriginalColumn):
 
 class UmeColumn(OriginalColumn):
     handler = Handlers.integer
-    labels = {
-        1: "Yes", 2: "No", 8: "Not on Certificate", 9: "Unknown or Not Stated",
-        99: 'Unknown'
-    }
+    labels = {1: "Yes", 2: "No", 8: "Not on Certificate", 9: "Unknown"}
+    pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
 
 
 class UmeVaginal(UmeColumn):
@@ -321,4 +321,21 @@ class FinalRouteMethod(OriginalColumn):
             x: (402, 402) for x in
             (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
         }
+    }
+
+
+class DeliveryMethod(OriginalColumn):
+    """ Delivery method recode """
+    handler = Handlers.integer
+    labels = {1: 'Vaginal', 2: 'Cesarean', 9: 'Unknown'}
+    pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
+    positions = {
+        **{
+            x: (403, 403) for x in
+            (Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011, Y2012, Y2013)
+        },
+        **{
+            x: (408, 408) for x in
+            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
+        },
     }

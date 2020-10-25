@@ -1,4 +1,4 @@
-def recurse_subclasses(class_to_recurse):
+def _recurse_subclasses(class_to_recurse):
     def generator(x):
         for y in x.__subclasses__():
             for z in generator(y):

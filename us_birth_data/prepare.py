@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from us_birth_data import fields, files
 from us_birth_data.files import YearData
+from us_birth_data._utils import _recurse_subclasses as recurse
 
 gzip_path = Path('gz')
 pq_path = Path('pq')
@@ -100,12 +101,9 @@ def get_queue():
     return queue
 
 
-def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.OriginalColumn] = None):
-    default_fields = (
-        fields.Births, fields.State, fields.OccurrenceState, fields.Month,
-        fields.Day, fields.DayOfWeek
-    )
-    field_list = field_list or default_fields
+def stage_pq(year_from=1968, year_to=9999, field_list: List[fields.OriginalColumn] = None):
+    orig = [x for x in recurse(fields.OriginalColumn) if not x.name().endswith('column')]
+    field_list = field_list or orig
     for file in files.YearData.__subclasses__():
         if year_from <= file.year <= year_to:
             with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:

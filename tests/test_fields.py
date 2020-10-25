@@ -1,10 +1,10 @@
 import pytest
 
-from tests.utils import recurse_subclasses
+from us_birth_data._utils import _recurse_subclasses
 from us_birth_data import fields
 from us_birth_data.files import YearData
 
-original_columns = recurse_subclasses(fields.OriginalColumn)
+original_columns = _recurse_subclasses(fields.OriginalColumn)
 
 
 class Xyz(fields.OriginalColumn):
