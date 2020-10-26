@@ -339,3 +339,38 @@ class DeliveryMethod(OriginalColumn):
             (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
         },
     }
+
+    @classmethod
+    def remap(cls, row: pd.Series):
+        rmp1 = cls.remap_final_route_method(getattr(row, FinalRouteMethod.name()))
+
+        kw = [
+            getattr(row, x.name()) for x in
+            (UmeVaginal, UmeVBAC, UmePrimaryCesarean, UmeRepeatCesarean)
+        ]
+        rmp2 = cls.remap_ume(*kw)
+
+        return rmp1 if rmp1 != 'Unknown' else rmp2
+
+    @classmethod
+    def remap_final_route_method(cls, value):
+        if value in ('Spontaneous', 'Forceps', 'Vacuum'):
+            return 'Vaginal'
+        elif value == 'Cesarean':
+            return 'Cesarean'
+        else:
+            return 'Unknown'
+
+    @classmethod
+    def remap_ume(cls, vag, vbac, prime, repeat):
+        if 'Yes' in (vag, vbac):
+            return 'Vaginal'
+        elif 'Yes' in (prime, repeat):
+            return 'Cesarean'
+        else:
+            return 'Unknown'
+
+
+final_fields = [
+    Year, Month, DayOfWeek, DeliveryMethod, State, Births
+]

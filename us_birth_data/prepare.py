@@ -9,7 +9,7 @@ from typing import List
 import pandas as pd
 from tqdm import tqdm
 
-from us_birth_data import fields, files
+from us_birth_data import fields as fd, files
 from us_birth_data.files import YearData
 from us_birth_data._utils import _recurse_subclasses as recurse
 
@@ -101,8 +101,8 @@ def get_queue():
     return queue
 
 
-def stage_pq(year_from=1968, year_to=9999, field_list: List[fields.OriginalColumn] = None):
-    orig = [x for x in recurse(fields.OriginalColumn) if not x.name().endswith('column')]
+def stage_pq(year_from=1968, year_to=9999, field_list: List[fd.OriginalColumn] = None):
+    orig = [x for x in recurse(fd.OriginalColumn) if not x.name().endswith('column')]
     field_list = field_list or orig
     for file in files.YearData.__subclasses__():
         if year_from <= file.year <= year_to:
@@ -123,9 +123,9 @@ def stage_pq(year_from=1968, year_to=9999, field_list: List[fields.OriginalColum
             df = pd.DataFrame.from_dict(fd)
 
             # field additions
-            df[fields.Year.name()] = file.year
+            df[fd.Year.name()] = file.year
 
-            n = fields.Births.name()
+            n = fd.Births.name()
             if n in df:
                 df[n] = df[n].fillna(1)
             elif file.year < 1972:
@@ -137,24 +137,23 @@ def stage_pq(year_from=1968, year_to=9999, field_list: List[fields.OriginalColum
             df.to_parquet(Path(pq_path, f"{file.__name__}.parquet"))
 
 
-def concatenate_years(year_from=0, year_to=9999, columns: list = None) -> pd.DataFrame:
+def concatenate_years(year_from=0, year_to=9999) -> pd.DataFrame:
     df = pd.DataFrame()
     years = YearData.__subclasses__()
     for yd in years:
         if year_from <= yd.year <= year_to:
-            rd = yd.read_parquet(columns=columns)
+            rd = yd.read_parquet()
 
-            if fields.DayOfWeek.name() not in rd and fields.Day.name() in rd:
-                rd[fields.DayOfWeek.name()] = pd.to_datetime(
+            if fd.DayOfWeek.name() not in rd and fd.Day.name() in rd:
+                rd[fd.DayOfWeek.name()] = pd.to_datetime(
                     rd[['year', 'month', 'day']], errors='coerce'
                 ).dt.strftime('%A')
 
             df = rd if df.empty else pd.concat([df, rd])
 
-    tc = {
-        x.name(): x.pd_type for x in
-        (fields.Year, fields.Month, fields.DayOfWeek, fields.State, fields.Births)
-    }
+    df[fd.DeliveryMethod.name()] = df.apply(fd.DeliveryMethod.remap, axis=1)
+
+    tc = {x.name(): x.pd_type for x in fd.final_fields}
     df = df.astype(tc)
     df = df[list(tc.keys())]  # reorder columns
 
