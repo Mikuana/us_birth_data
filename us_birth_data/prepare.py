@@ -9,9 +9,9 @@ from typing import List
 import pandas as pd
 from tqdm import tqdm
 
-from us_birth_data import fields as fd, files
-from us_birth_data.files import YearData
+from us_birth_data import fields
 from us_birth_data._utils import _recurse_subclasses as recurse
+from us_birth_data.files import YearData
 
 gzip_path = Path('gz')
 pq_path = Path('pq')
@@ -101,10 +101,10 @@ def get_queue():
     return queue
 
 
-def stage_pq(year_from=1968, year_to=9999, field_list: List[fd.OriginalColumn] = None):
-    orig = [x for x in recurse(fd.OriginalColumn) if not x.name().endswith('column')]
+def stage_pq(year_from=1968, year_to=9999, field_list: List[fields.OriginalColumn] = None):
+    orig = [x for x in recurse(fields.OriginalColumn) if not x.name().endswith('column')]
     field_list = field_list or orig
-    for file in files.YearData.__subclasses__():
+    for file in YearData.__subclasses__():
         if year_from <= file.year <= year_to:
             with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:
                 print(f"Counting rows in {file.pub_file}")
@@ -123,9 +123,9 @@ def stage_pq(year_from=1968, year_to=9999, field_list: List[fd.OriginalColumn] =
             df = pd.DataFrame.from_dict(fd)
 
             # field additions
-            df[fd.Year.name()] = file.year
+            df[fields.Year.name()] = file.year
 
-            n = fd.Births.name()
+            n = fields.Births.name()
             if n in df:
                 df[n] = df[n].fillna(1)
             elif file.year < 1972:
@@ -144,16 +144,18 @@ def concatenate_years(year_from=0, year_to=9999) -> pd.DataFrame:
         if year_from <= yd.year <= year_to:
             rd = yd.read_parquet()
 
-            if fd.DayOfWeek.name() not in rd and fd.Day.name() in rd:
-                rd[fd.DayOfWeek.name()] = pd.to_datetime(
+            if fields.DayOfWeek.name() not in rd and fields.Day.name() in rd:
+                rd[fields.DayOfWeek.name()] = pd.to_datetime(
                     rd[['year', 'month', 'day']], errors='coerce'
                 ).dt.strftime('%A')
 
             df = rd if df.empty else pd.concat([df, rd])
 
-    df[fd.DeliveryMethod.name()] = df.apply(fd.DeliveryMethod.remap, axis=1)
+    df[fields.DeliveryMethod.name()] = df.apply(fields.DeliveryMethod.remap, axis=1)
 
-    tc = {x.name(): x.pd_type for x in fd.final_fields}
+    tc = {x.name(): x.pd_type for x in fields.final_fields}
+    for col in df.columns.tolist():
+        df[col] = df[col].fillna('Unknown')
     df = df.astype(tc)
     df = df[list(tc.keys())]  # reorder columns
 
