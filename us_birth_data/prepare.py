@@ -101,19 +101,27 @@ def get_queue():
     return queue
 
 
-def stage_pq(year_from=1968, year_to=9999, field_list: List[fields.OriginalColumn] = None):
-    orig = [x for x in recurse(fields.OriginalColumn) if not x.name().endswith('column')]
-    field_list = field_list or orig
+def stage_pq(year_from=1968, year_to=9999, sample_size=0):
+    field_list = [
+        x for x in recurse(fields.OriginalColumn)
+        if not x.name().endswith('column')
+    ]
     for file in YearData.__subclasses__():
         if year_from <= file.year <= year_to:
-            with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:
-                print(f"Counting rows in {file.pub_file}")
-                total = sum(1 for _ in r)
-                print(f"{total} rows")
+
+            print(f"Counting rows in {file.pub_file}")
+            if sample_size:
+                total = sample_size
+            else:
+                with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:
+                    total = sum(1 for _ in r)
+            print(f"{total} rows")
 
             fd = {x: [] for x in field_list if x.position(file)}
             with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:
-                for line in tqdm(r, total=total):
+                for ix, line in enumerate(tqdm(r, total=total)):
+                    if sample_size and ix > sample_size:
+                        break
                     if not line.isspace():
                         for k, v in fd.items():
                             fd[k].append(k.parse_from_row(file, line))
