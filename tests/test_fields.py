@@ -4,10 +4,10 @@ from us_birth_data._utils import _recurse_subclasses
 from us_birth_data import fields
 from us_birth_data.files import YearData
 
-original_columns = _recurse_subclasses(fields.OriginalColumn)
+original_columns = _recurse_subclasses(fields.Source)
 
 
-class Xyz(fields.OriginalColumn):
+class Xyz(fields.Source):
     handler = fields.Handlers.integer
     positions = {YearData: (1, 2)}
     na_value = 9
@@ -33,7 +33,7 @@ def test_handler_character(raw, processed):
 
 def test_snake_name():
     assert fields.Column.name() == 'column'
-    assert fields.OriginalColumn.name() == 'original_column'
+    assert fields.Source.name() == 'original_column'
 
 
 def test_position_map():

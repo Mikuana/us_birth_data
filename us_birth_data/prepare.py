@@ -4,13 +4,11 @@ import subprocess
 from ftplib import FTP
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List
 
 import pandas as pd
 from tqdm import tqdm
 
 from us_birth_data import fields
-from us_birth_data._utils import _recurse_subclasses as recurse
 from us_birth_data.files import YearData
 
 gzip_path = Path('gz')
@@ -102,10 +100,8 @@ def get_queue():
 
 
 def stage_pq(year_from=1968, year_to=9999, sample_size=0):
-    field_list = [
-        x for x in recurse(fields.OriginalColumn)
-        if not x.name().endswith('column')
-    ]
+    mdf = pd.DataFrame()
+
     for file in YearData.__subclasses__():
         if year_from <= file.year <= year_to:
 
@@ -117,7 +113,7 @@ def stage_pq(year_from=1968, year_to=9999, sample_size=0):
                     total = sum(1 for _ in r)
             print(f"{total} rows")
 
-            fd = {x: [] for x in field_list if x.position(file)}
+            fd = {x: [] for x in fields.sources}
             with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:
                 for ix, line in enumerate(tqdm(r, total=total)):
                     if sample_size and ix > sample_size:
@@ -130,49 +126,23 @@ def stage_pq(year_from=1968, year_to=9999, sample_size=0):
             fd = dict(zip(new_keys, fd.values()))
             df = pd.DataFrame.from_dict(fd)
 
-            # field additions
-            df[fields.Year.name()] = file.year
+            kw = dict(year=file.year)
+            for t in fields.targets:
+                df[t.name()] = t.remap(df, **kw)
 
-            n = fields.Births.name()
-            if n in df:
-                df[n] = df[n].fillna(1)
-            elif file.year < 1972:
-                df[n] = 2
-            else:
-                df[n] = 1
+            mdf = df if df.empty else pd.concat([mdf, df])
 
-            df = df.groupby([x for x in df.columns.tolist() if x != n], as_index=False)[n].sum()
-            df.to_parquet(Path(pq_path, f"{file.__name__}.parquet"))
+    print(mdf[fields.AgeOfMotherSuppressed.name()])
+    tc = {x.name(): x.pd_type for x in fields.targets}
+    print(tc)
+    mdf = mdf.astype(tc)
+    mdf = mdf[list(tc.keys())]  # reorder columns
 
-
-def concatenate_years(year_from=0, year_to=9999) -> pd.DataFrame:
-    df = pd.DataFrame()
-    years = YearData.__subclasses__()
-    for yd in years:
-        if year_from <= yd.year <= year_to:
-            rd = yd.read_parquet()
-
-            if fields.DayOfWeek.name() not in rd and fields.Day.name() in rd:
-                rd[fields.DayOfWeek.name()] = pd.to_datetime(
-                    rd[['year', 'month', 'day']], errors='coerce'
-                ).dt.strftime('%A')
-
-            df = rd if df.empty else pd.concat([df, rd])
-
-    df[fields.DeliveryMethod.name()] = fields.DeliveryMethod.remap(df)
-    # df[fields.AgeOfMother.name()] = df.apply(fields.DeliveryMethod.remap, axis=1)
-
-    tc = {x.name(): x.pd_type for x in fields.final_fields}
-    for col in df.columns.tolist():
-        df[col] = df[col].fillna('Unknown')
-    df = df.astype(tc)
-    df = df[list(tc.keys())]  # reorder columns
-
-    cat_cols = df.columns[[isinstance(x, pd.CategoricalDtype) for x in df.dtypes]]
+    cat_cols = mdf.columns[[isinstance(x, pd.CategoricalDtype) for x in mdf.dtypes]]
     for cc in cat_cols:
-        df[cc] = df[cc].cat.remove_unused_categories()
+        mdf[cc] = mdf[cc].cat.remove_unused_categories()
 
-    return df
+    return mdf
 
 
 def generate_data_set():
@@ -182,6 +152,6 @@ def generate_data_set():
     for q in get_queue():
         stage_gzip(q)
 
-    stage_pq()
-    df = concatenate_years()
+    df = stage_pq()
+    # df = concatenate_years()
     df.to_parquet(Path(Path(__file__).parent, 'us_birth_data.parquet'))

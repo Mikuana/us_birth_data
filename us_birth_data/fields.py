@@ -2,6 +2,7 @@ import re
 
 from pandas.api.types import CategoricalDtype
 
+from us_birth_data._utils import _recurse_subclasses
 from us_birth_data.files import *
 
 
@@ -19,29 +20,16 @@ class Handlers:
 
 class Column:
     """ Base Column class """
-    pd_type: str = None
 
     @classmethod
     def name(cls):
         return re.sub(r'(?<!^)(?=[A-Z])', '_', cls.__name__).lower()
 
 
-class Year(Column):
-    """
-    Birth Year
-
-    And integer describing the year that the birth occurred. Although this is not
-    explicitly included in the raw data sets, it is implied by the year that the
-    data set represents.
-    """
-
-    pd_type = 'uint16'
-
-
-class OriginalColumn(Column):
+class Source(Column):
     handler = None
-    positions: dict = None
     na_value = None
+    positions: dict = {}
     labels = {}
 
     @classmethod
@@ -63,39 +51,125 @@ class OriginalColumn(Column):
     @classmethod
     def parse_from_row(cls, file: YearData, row: list):
         pos = cls.position(file)
-        value = row[pos[0] - 1:pos[1]]
-        value = cls.prep(value)
-        value = cls.decode(value)
-        return value
+        if pos:
+            value = row[pos[0] - 1:pos[1]]
+            value = cls.prep(value)
+            value = cls.decode(value)
+            return value
+        else:
+            return
 
 
-class Births(OriginalColumn):
+class Target(Column):
+    pd_type: str = None
+
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        return data_frame[cls.name()]
+
+
+class Year(Target):
     """
-    Number of births
+    Birth Year
 
-    An integer representing the number of birth records that are represented by
-    the combination of dimensions that are present in a particular record of the
-    births data set. All math that is performed on this data set should be weighted
-    by this value.
-
-    From 1968 to 1971, the number of records is calculated assuming a 50% sample
-    rate (i.e. each record counts for 2 births), per the documentation. From 1972
-    to 1984, and explicit record weight column was introduced, which indicates the
-    appropriate weighting of records; some states used a 50% sample, and some
-    reported all records. After 1984, the data are reported without weighting, and
-    each record is counted as a single birth.
+    And integer describing the year that the birth occurred. Although this is not
+    explicitly included in the raw data sets, it is implied by the year that the
+    data set represents.
     """
 
-    pd_type = 'uint32'
+    pd_type = 'uint16'
+
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        return kwargs.get('year')
+
+
+class Month(Source, Target):
+    """ Birth Month """
+
     handler = Handlers.integer
+    labels = {
+        1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May', 6: 'June',
+        7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November',
+        12: 'December', 99: 'Unknown'
+    }
+    pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
     positions = {
-        x: (208, 208) for x in
-        (Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979,
-         Y1980, Y1981, Y1982, Y1983, Y1984)
+        Y1968: (32, 33),
+        **{
+            x: (84, 85) for x in
+            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979, Y1980,
+             Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
+        },
+        **{
+            x: (172, 173) for x in
+            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
+             Y1999, Y2000, Y2001, Y2002)
+        },
+        **{
+            x: (19, 20) for x in
+            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011,
+             Y2012, Y2013)
+        },
+        **{
+            x: (13, 14) for x in
+            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
+        }
     }
 
 
-class State(OriginalColumn):
+class Day(Source):
+    """ Birth Day of Month """
+
+    handler = Handlers.integer
+    na_value = 99
+    positions = {
+        x: (86, 87) for x in
+        (
+            Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979, Y1980,
+            Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988
+        )
+    }
+
+
+class DayOfWeek(Source, Target):
+    """ Date of Birth Weekday """
+
+    labels = {
+        1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday',
+        6: 'Friday', 7: 'Saturday', 99: 'Unknown'
+    }
+    pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
+    handler = Handlers.integer
+
+    positions = {
+        **{
+            x: (180, 180) for x in
+            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
+             Y1999, Y2000, Y2001, Y2002)
+        },
+        **{
+            x: (29, 29) for x in
+            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010,
+             Y2011, Y2012, Y2013)
+        },
+        **{
+            x: (23, 23) for x in
+            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
+        }
+    }
+
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        rd = data_frame[[Year.name(), Month.name(), Day.name()]].copy()
+        lkp = dict(zip(Month.labels.values(), Month.labels.keys()))
+        rd[Month.name()] = rd[Month.name()].replace(lkp)
+        return data_frame[DayOfWeek.name()].combine_first(
+            pd.to_datetime(rd, errors='coerce').dt.strftime('%A')
+        )
+
+
+class State(Source, Target):
     """
     State of Occurrence
 
@@ -133,6 +207,10 @@ class State(OriginalColumn):
         },
     }
 
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        return data_frame[cls.name()].combine_first(data_frame[OccurrenceState.name()])
+
 
 class OccurrenceState(State):
     handler = Handlers.character
@@ -156,88 +234,8 @@ class OccurrenceState(State):
         Y2004: (30, 31)
     }
 
-    @classmethod
-    def name(cls):
-        return State.name()
 
-
-class Month(OriginalColumn):
-    """ Birth Month """
-
-    handler = Handlers.integer
-    labels = {
-        1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May', 6: 'June',
-        7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November',
-        12: 'December', 99: 'Unknown'
-    }
-    pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
-    positions = {
-        Y1968: (32, 33),
-        **{
-            x: (84, 85) for x in
-            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979, Y1980,
-             Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
-        },
-        **{
-            x: (172, 173) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
-             Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (19, 20) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011,
-             Y2012, Y2013)
-        },
-        **{
-            x: (13, 14) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
-    }
-
-
-class Day(OriginalColumn):
-    """ Birth Day of Month """
-
-    handler = Handlers.integer
-    na_value = 99
-    positions = {
-        x: (86, 87) for x in
-        (
-            Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979, Y1980,
-            Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988
-        )
-    }
-
-
-class DayOfWeek(OriginalColumn):
-    """ Date of Birth Weekday """
-
-    labels = {
-        1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday',
-        6: 'Friday', 7: 'Saturday', 99: 'Unknown'
-    }
-    pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
-    handler = Handlers.integer
-
-    positions = {
-        **{
-            x: (180, 180) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
-             Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (29, 29) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010,
-             Y2011, Y2012, Y2013)
-        },
-        **{
-            x: (23, 23) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
-    }
-
-
-class UmeColumn(OriginalColumn):
+class UmeColumn(Source):
     handler = Handlers.integer
     labels = {1: "Yes", 2: "No", 8: "Not on Certificate", 9: "Unknown"}
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
@@ -307,7 +305,7 @@ class UmeRepeatCesarean(UmeColumn):
     }
 
 
-class FinalRouteMethod(OriginalColumn):
+class FinalRouteMethod(Source):
     """ Final Route & Method of Delivery """
 
     handler = Handlers.integer
@@ -328,7 +326,7 @@ class FinalRouteMethod(OriginalColumn):
     }
 
 
-class DeliveryMethod(OriginalColumn):
+class DeliveryMethod(Source, Target):
     """ Delivery method recode """
     handler = Handlers.integer
     labels = {1: 'Vaginal', 2: 'Cesarean', 9: 'Unknown'}
@@ -347,8 +345,8 @@ class DeliveryMethod(OriginalColumn):
     @classmethod
     def remap(cls, df: pd.DataFrame) -> pd.Series:
         df[cls.name()] = df[cls.name()].replace('Unknown', None)
-        df[cls.name()] = df[cls.name()].\
-            combine_first(cls.remap_final_route_method(df)).\
+        df[cls.name()] = df[cls.name()]. \
+            combine_first(cls.remap_final_route_method(df)). \
             combine_first(cls.remap_ume(df))
         return df[cls.name()]
 
@@ -376,7 +374,7 @@ class DeliveryMethod(OriginalColumn):
         return vag.combine_first(vbac).combine_first(prime).combine_first(repeat)
 
 
-class SexOfChild(OriginalColumn):
+class SexOfChild(Source, Target):
     """ Sex of child """
     handler = Handlers.integer
     labels = {1: 'Male', 2: 'Female', 9: 'Unknown'}
@@ -394,6 +392,10 @@ class SexOfChild(OriginalColumn):
              Y1999, Y2000, Y2001, Y2002)
         }
     }
+
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        return data_frame[cls.name()].combine_first(data_frame[Sex.name()])
 
 
 class Sex(SexOfChild):
@@ -413,7 +415,7 @@ class Sex(SexOfChild):
     }
 
 
-class AgeOfMother(OriginalColumn):
+class AgeOfMother(Source, Target):
     """ Age of Mother """
     handler = Handlers.integer
     na_value = 99
@@ -437,18 +439,19 @@ class AgeOfMother(OriginalColumn):
         Y2003: (77, 78)
     }
 
-    @classmethod
-    def remap(cls, row: pd.Series):
-        return cls.remap_age_of_mother_suppressed(
-            getattr(row, AgeOfMotherSuppressed.name())
-        )
-
-    @classmethod
-    def remap_age_of_mother_suppressed(cls, value):
-        try:
-            return int(value)
-        except ValueError:
-            return None
+    # @classmethod
+    # def remap(cls, row: pd.Series):
+    #     return cls.remap_age_of_mother_suppressed(
+    #         getattr(row, AgeOfMotherSuppressed.name())
+    #     )
+    #
+    # @classmethod
+    # def remap_age_of_mother_suppressed(cls, value):
+    #     try:
+    #         return int(value)
+    #     except ValueError:
+    #         return None
+    #
 
 
 class AgeOfMotherSuppressed(AgeOfMother):
@@ -474,7 +477,49 @@ class AgeOfMotherSuppressed(AgeOfMother):
     }
 
 
-final_fields = [
-    Year, Month, DayOfWeek, DeliveryMethod, SexOfChild, State, AgeOfMother,
-    Births
+class Births(Source, Target):
+    """
+    Number of births
+
+    An integer representing the number of birth records that are represented by
+    the combination of dimensions that are present in a particular record of the
+    births data set. All math that is performed on this data set should be weighted
+    by this value.
+
+    From 1968 to 1971, the number of records is calculated assuming a 50% sample
+    rate (i.e. each record counts for 2 births), per the documentation. From 1972
+    to 1984, and explicit record weight column was introduced, which indicates the
+    appropriate weighting of records; some states used a 50% sample, and some
+    reported all records. After 1984, the data are reported without weighting, and
+    each record is counted as a single birth.
+    """
+
+    pd_type = 'uint32'
+    handler = Handlers.integer
+    positions = {
+        x: (208, 208) for x in
+        (Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979,
+         Y1980, Y1981, Y1982, Y1983, Y1984)
+    }
+
+    # # TODO: add this as a remap
+    # n = fields.Births.name()
+    # if n in df:
+    #     df[n] = df[n].fillna(1)
+    # elif file.year < 1972:
+    #     df[n] = 2
+    # else:
+    #     df[n] = 1
+
+    # df = df.groupby([x for x in df.columns.tolist() if x != n], as_index=False)[n].sum()
+
+
+sources = _recurse_subclasses(Source)
+targets = _recurse_subclasses(Target)
+# restrict to direct Target assignment only, not inherited
+targets = [
+    t for t in targets
+    if not any([t in _recurse_subclasses(x) for x in targets])
 ]
+
+targets = [Year, Month, DayOfWeek, State, SexOfChild, AgeOfMother]
