@@ -151,7 +151,8 @@ def concatenate_years(year_from=0, year_to=9999) -> pd.DataFrame:
 
             df = rd if df.empty else pd.concat([df, rd])
 
-    df[fields.DeliveryMethod.name()] = df.apply(fields.DeliveryMethod.remap, axis=1)
+    df[fields.DeliveryMethod.name()] = fields.DeliveryMethod.remap(df)
+    # df[fields.AgeOfMother.name()] = df.apply(fields.DeliveryMethod.remap, axis=1)
 
     tc = {x.name(): x.pd_type for x in fields.final_fields}
     for col in df.columns.tolist():

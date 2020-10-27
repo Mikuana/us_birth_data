@@ -14,7 +14,7 @@ class Handlers:
 
     @staticmethod
     def character(x):
-        return x
+        return x.decode('utf-8')
 
 
 class Column:
@@ -148,13 +148,17 @@ class OccurrenceState(State):
         'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VA': 'Virginia', 'VT': 'Vermont', 'WA': 'Washington',
         'WI': 'Wisconsin', 'WV': 'West Virginia', 'WY': 'Wyoming', 'AS': 'American Samoa', 'GU': 'Guam',
         'MP': 'Northern Marianas', 'PR': 'Puerto Rico', 'VI': 'Virgin Islands',
-        'XX': 'Unknown'
+        99: 'Unknown'
     }
 
     positions = {
         Y2003: (30, 31),
         Y2004: (30, 31)
     }
+
+    @classmethod
+    def name(cls):
+        return State.name()
 
 
 class Month(OriginalColumn):
@@ -341,34 +345,35 @@ class DeliveryMethod(OriginalColumn):
     }
 
     @classmethod
-    def remap(cls, row: pd.Series):
-        rmp1 = cls.remap_final_route_method(getattr(row, FinalRouteMethod.name()))
-
-        kw = [
-            getattr(row, x.name()) for x in
-            (UmeVaginal, UmeVBAC, UmePrimaryCesarean, UmeRepeatCesarean)
-        ]
-        rmp2 = cls.remap_ume(*kw)
-
-        return rmp1 if rmp1 != 'Unknown' else rmp2
+    def remap(cls, df: pd.DataFrame) -> pd.Series:
+        df[cls.name()] = df[cls.name()].replace('Unknown', None)
+        df[cls.name()] = df[cls.name()].\
+            combine_first(cls.remap_final_route_method(df)).\
+            combine_first(cls.remap_ume(df))
+        return df[cls.name()]
 
     @classmethod
-    def remap_final_route_method(cls, value):
-        if value in ('Spontaneous', 'Forceps', 'Vacuum'):
-            return 'Vaginal'
-        elif value == 'Cesarean':
-            return 'Cesarean'
-        else:
-            return 'Unknown'
+    def remap_final_route_method(cls, df: pd.DataFrame) -> pd.Series:
+        lkp = {
+            'Spontaneous': 'Vaginal',
+            'Forceps': 'Vaginal',
+            'Vacuum': 'Vaginal',
+            'Cesarean': 'Cesarean',
+            'Unknown or not stated': None,
+            'Unknown': None
+        }
+        return df[FinalRouteMethod.name()].replace(lkp)
 
     @classmethod
-    def remap_ume(cls, vag, vbac, prime, repeat):
-        if 'Yes' in (vag, vbac):
-            return 'Vaginal'
-        elif 'Yes' in (prime, repeat):
-            return 'Cesarean'
-        else:
-            return 'Unknown'
+    def remap_ume(cls, df: pd.DataFrame) -> pd.Series:
+        v_lkp = {'Yes': 'Vaginal', 'No': None, 'Unknown': None}
+        vag = df[UmeVaginal.name()].replace(v_lkp)
+        vbac = df[UmeVBAC.name()].replace(v_lkp)
+
+        c_lkp = {'Yes': 'Cesarean', 'No': None, 'Unknown': None}
+        prime = df[UmePrimaryCesarean.name()].replace(c_lkp)
+        repeat = df[UmeRepeatCesarean.name()].replace(c_lkp)
+        return vag.combine_first(vbac).combine_first(prime).combine_first(repeat)
 
 
 class SexOfChild(OriginalColumn):
@@ -408,6 +413,68 @@ class Sex(SexOfChild):
     }
 
 
+class AgeOfMother(OriginalColumn):
+    """ Age of Mother """
+    handler = Handlers.integer
+    na_value = 99
+    pd_type = 'uint8'
+    positions = {
+        Y1968: (38, 39),
+        **{
+            x: (41, 42) for x in
+            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978,
+             Y1979, Y1980, Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
+        },
+        **{
+            x: (70, 71) for x in
+            (Y1989, Y1990, Y1991)
+        },
+        **{
+            x: (91, 92) for x in
+            (Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998, Y1999,
+             Y2000, Y2001, Y2002)
+        },
+        Y2003: (77, 78)
+    }
+
+    @classmethod
+    def remap(cls, row: pd.Series):
+        return cls.remap_age_of_mother_suppressed(
+            getattr(row, AgeOfMotherSuppressed.name())
+        )
+
+    @classmethod
+    def remap_age_of_mother_suppressed(cls, value):
+        try:
+            return int(value)
+        except ValueError:
+            return None
+
+
+class AgeOfMotherSuppressed(AgeOfMother):
+    pd_type = str
+    labels = {
+        12: '10-12 years', 13: '13', 14: '14', 15: '15', 16: '16', 17: '17',
+        18: '18', 19: '19', 20: '20', 21: '21', 22: '22', 23: '23', 24: '24',
+        25: '25', 26: '26', 27: '27', 28: '28', 29: '29', 30: '30', 31: '31',
+        32: '32', 33: '33', 34: '34', 35: '35', 36: '36', 37: '37', 38: '38',
+        39: '39', 40: '40', 41: '41', 42: '42', 43: '43', 44: '44', 45: '45',
+        46: '46', 47: '47', 48: '48', 49: '49', 50: '50-54 years', 99: 'Unknown'
+    }
+
+    positions = {
+        **{
+            x: (89, 90) for x in
+            (Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011, Y2012, Y2013)
+        },
+        **{
+            x: (75, 76) for x in
+            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
+        }
+    }
+
+
 final_fields = [
-    Year, Month, DayOfWeek, DeliveryMethod, SexOfChild, State, Births
+    Year, Month, DayOfWeek, DeliveryMethod, SexOfChild, State, AgeOfMother,
+    Births
 ]
