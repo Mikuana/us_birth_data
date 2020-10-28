@@ -42,11 +42,10 @@ class Source(Column):
 
     @classmethod
     def decode(cls, value):
-        v = cls.labels.get(value, value)
-        v = None if v == cls.na_value else v
-        if not v and 'Unknown' in cls.labels.values():
-            v = 'Unknown'
-        return v
+        if cls.labels:
+            return cls.labels.get(value)
+        else:
+            return value
 
     @classmethod
     def parse_from_row(cls, file: YearData, row: list):
@@ -91,7 +90,7 @@ class Month(Source, Target):
     labels = {
         1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May', 6: 'June',
         7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November',
-        12: 'December', 99: 'Unknown'
+        12: 'December'
     }
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
     positions = {
@@ -137,7 +136,7 @@ class DayOfWeek(Source, Target):
 
     labels = {
         1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday',
-        6: 'Friday', 7: 'Saturday', 99: 'Unknown'
+        6: 'Friday', 7: 'Saturday'
     }
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
     handler = Handlers.integer
@@ -189,8 +188,7 @@ class State(Source, Target):
         33: 'New York', 34: 'North Carolina', 35: 'North Dakota', 36: 'Ohio', 37: 'Oklahoma', 38: 'Oregon',
         39: 'Pennsylvania', 40: 'Rhode Island', 41: 'South Carolina', 42: 'South Dakota', 43: 'Tennessee',
         44: 'Texas', 45: 'Utah', 46: 'Vermont', 47: 'Virginia', 48: 'Washington', 49: 'West Virginia',
-        50: 'Wisconsin', 51: 'Wyoming', 52: 'Puerto Rico', 53: 'Virgin Islands', 54: 'Guam',
-        99: 'Unknown'
+        50: 'Wisconsin', 51: 'Wyoming', 52: 'Puerto Rico', 53: 'Virgin Islands', 54: 'Guam'
     }
     positions = {
         Y1968: (74, 75),
@@ -225,8 +223,7 @@ class OccurrenceState(State):
         'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina', 'SD': 'South Dakota',
         'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VA': 'Virginia', 'VT': 'Vermont', 'WA': 'Washington',
         'WI': 'Wisconsin', 'WV': 'West Virginia', 'WY': 'Wyoming', 'AS': 'American Samoa', 'GU': 'Guam',
-        'MP': 'Northern Marianas', 'PR': 'Puerto Rico', 'VI': 'Virgin Islands',
-        99: 'Unknown'
+        'MP': 'Northern Marianas', 'PR': 'Puerto Rico', 'VI': 'Virgin Islands'
     }
 
     positions = {
@@ -237,7 +234,7 @@ class OccurrenceState(State):
 
 class UmeColumn(Source):
     handler = Handlers.integer
-    labels = {1: "Yes", 2: "No", 8: "Not on Certificate", 9: "Unknown"}
+    labels = {1: "Yes", 2: "No", 8: "Not on Certificate"}
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
 
 
@@ -310,8 +307,7 @@ class FinalRouteMethod(Source):
 
     handler = Handlers.integer
     labels = {
-        1: "Spontaneous", 2: "Forceps", 3: "Vacuum", 4: "Cesarean", 9: "Unknown or not stated",
-        99: 'Unknown'
+        1: "Spontaneous", 2: "Forceps", 3: "Vacuum", 4: "Cesarean", 9: "Unknown or not stated"
     }
 
     positions = {
@@ -329,7 +325,7 @@ class FinalRouteMethod(Source):
 class DeliveryMethod(Source, Target):
     """ Delivery method recode """
     handler = Handlers.integer
-    labels = {1: 'Vaginal', 2: 'Cesarean', 9: 'Unknown'}
+    labels = {1: 'Vaginal', 2: 'Cesarean'}
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
     positions = {
         **{
@@ -344,7 +340,7 @@ class DeliveryMethod(Source, Target):
 
     @classmethod
     def remap(cls, data_frame: pd.DataFrame, **kwargs):
-        return data_frame[cls.name()].replace('Unknown', None).\
+        return data_frame[cls.name()].\
             combine_first(cls.remap_final_route_method(data_frame)).\
             combine_first(cls.remap_ume(data_frame))
 
@@ -356,17 +352,16 @@ class DeliveryMethod(Source, Target):
             'Vacuum': 'Vaginal',
             'Cesarean': 'Cesarean',
             'Unknown or not stated': None,
-            'Unknown': None
         }
         return df[FinalRouteMethod.name()].replace(lkp)
 
     @classmethod
     def remap_ume(cls, df: pd.DataFrame) -> pd.Series:
-        v_lkp = {'Yes': 'Vaginal', 'No': None, 'Unknown': None}
+        v_lkp = {'Yes': 'Vaginal', 'No': None}
         vag = df[UmeVaginal.name()].replace(v_lkp)
         vbac = df[UmeVBAC.name()].replace(v_lkp)
 
-        c_lkp = {'Yes': 'Cesarean', 'No': None, 'Unknown': None}
+        c_lkp = {'Yes': 'Cesarean', 'No': None}
         prime = df[UmePrimaryCesarean.name()].replace(c_lkp)
         repeat = df[UmeRepeatCesarean.name()].replace(c_lkp)
         return vag.combine_first(vbac).combine_first(prime).combine_first(repeat)
@@ -375,7 +370,7 @@ class DeliveryMethod(Source, Target):
 class SexOfChild(Source, Target):
     """ Sex of child """
     handler = Handlers.integer
-    labels = {1: 'Male', 2: 'Female', 9: 'Unknown'}
+    labels = {1: 'Male', 2: 'Female'}
     pd_type = 'category'
     positions = {
         Y1968: (31, 31),
@@ -399,7 +394,7 @@ class SexOfChild(Source, Target):
 class Sex(SexOfChild):
     """ Sex of child """
     handler = Handlers.character
-    labels = {'M': 'Male', 'F': 'Female', 9: 'Unknown'}
+    labels = {'M': 'Male', 'F': 'Female'}
     positions = {
         **{
             x: (436, 436) for x in
@@ -439,7 +434,7 @@ class AgeOfMother(Source, Target):
 
     @classmethod
     def remap(cls, data_frame: pd.DataFrame, **kwargs):
-        recodes = {x: None for x in ('10-12 years', '50-54 years', 'Unknown')}
+        recodes = {x: None for x in ('10-12 years', '50-54 years')}
         return data_frame[cls.name()].combine_first(
             data_frame[AgeOfMotherSuppressed.name()].replace(recodes)
         )
@@ -453,7 +448,7 @@ class AgeOfMotherSuppressed(AgeOfMother):
         25: '25', 26: '26', 27: '27', 28: '28', 29: '29', 30: '30', 31: '31',
         32: '32', 33: '33', 34: '34', 35: '35', 36: '36', 37: '37', 38: '38',
         39: '39', 40: '40', 41: '41', 42: '42', 43: '43', 44: '44', 45: '45',
-        46: '46', 47: '47', 48: '48', 49: '49', 50: '50-54 years', 99: 'Unknown'
+        46: '46', 47: '47', 48: '48', 49: '49', 50: '50-54 years'
     }
 
     positions = {
