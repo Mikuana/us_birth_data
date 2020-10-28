@@ -408,6 +408,95 @@ class Sex(SexOfChild):
     }
 
 
+class BirthFacility(Source, Target):
+    """
+    Birth Facility
+
+    Indicates whether the birth was an in or out of hospital birth.
+    """
+    handler = Handlers.integer
+    labels = {1: "In Hospital", 2: "Not in Hospital"}
+    pd_type = 'category'
+    positions = {
+        **{
+            x: (9, 9) for x in
+            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
+             Y1998, Y1999, Y2000, Y2001, Y2002)
+        },
+        **{
+            x: (59, 59) for x in
+            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011,
+             Y2012, Y2013)
+        },
+        **{
+            x: (50, 50) for x in
+            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
+        }
+    }
+
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        pod = {
+            "Hospital Births": "In Hospital", "Nonhospital Births": "Not in Hospital",
+            "En route or born on arrival (BOA)": "Not in Hospital", "Not classifiable": None
+        }
+        pod75 = {
+            "Hospital or Institution": "In Hospital", "Clinic, Center, or a Home": "Not in Hospital",
+            "Names places (Drs. Offices)": "Not in Hospital", "Street Address": "Not in Hospital",
+            "Not classifiable": None
+        }
+        aab = {
+            "Births in hospitals or institutions": "In Hospital",
+            "Births not in hospitals; Attended by physician": "Not in Hospital",
+            "Births not in hospitals; Attended by midwife": "Not in Hospital",
+            "Other and not specified": None
+        }
+
+        return data_frame[cls.name()].combine_first(
+            data_frame[PlaceOfDelivery.name()].replace(pod)
+        ).combine_first(
+            data_frame[PlaceOfDelivery1975.name()].replace(pod75)
+        ).combine_first(
+            data_frame[AttendantAtBirth.name()].replace(aab)
+        )
+
+
+class PlaceOfDelivery(Source):
+    handler = Handlers.integer
+    labels = {
+        1: "Hospital Births", 2: "Nonhospital Births",
+        3: "En route or born on arrival (BOA)", 9: "Not classifiable"
+    }
+    positions = {
+        x: (80, 80) for x in
+        (Y1978, Y1979, Y1980, Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
+    }
+
+
+class PlaceOfDelivery1975(Source):
+    handler = Handlers.integer
+    labels = {
+        1: "Hospital or Institution", 2: "Clinic, Center, or a Home",
+        3: "Names places (Drs. Offices)", 4: "Street Address", 9: "Not classifiable"
+    }
+    positions = {x: (80, 80) for x in (Y1975, Y1976, Y1977)}
+
+
+class AttendantAtBirth(Source):
+    handler = Handlers.integer
+    labels = {
+        1: "Births in hospitals or institutions", 2: "Births not in hospitals; Attended by physician",
+        3: "Births not in hospitals; Attended by midwife", 4: "Other and not specified"
+    }
+    positions = {
+        Y1968: (58, 58),
+        **{
+            x: (36, 36) for x in
+            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977)
+        }
+    }
+
+
 class AgeOfMother(Source, Target):
     """ Age of Mother """
     handler = Handlers.integer
