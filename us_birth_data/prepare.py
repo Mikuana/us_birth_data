@@ -12,7 +12,6 @@ from us_birth_data import fields
 from us_birth_data.files import YearData
 
 gzip_path = Path('gz')
-pq_path = Path('pq')
 
 
 class FtpGet:
@@ -145,7 +144,6 @@ def stage_pq(year_from=1968, year_to=9999, sample_size=0):
 
 def generate_data_set():
     gzip_path.mkdir(exist_ok=True)
-    pq_path.mkdir(exist_ok=True)
 
     for q in get_queue():
         stage_gzip(q)
