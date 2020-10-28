@@ -505,7 +505,3 @@ targets = [
     t for t in targets
     if not any([t in _recurse_subclasses(x) for x in targets])
 ]
-# print(targets)
-targets = [
-    Year, Month, DayOfWeek, State, SexOfChild, DeliveryMethod, AgeOfMother, Births
-]
