@@ -497,9 +497,7 @@ class Births(Source, Target):
 
 
 sources = _recurse_subclasses(Source)
-targets = _recurse_subclasses(Target)
-# restrict to direct Target assignment only, not inherited
 targets = [
-    t for t in targets
-    if not any([t in _recurse_subclasses(x) for x in targets])
+    t for t in _recurse_subclasses(Target)
+    if not any([t in _recurse_subclasses(x) for x in _recurse_subclasses(Target)])
 ]
