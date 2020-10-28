@@ -45,7 +45,7 @@ class Source(Column):
         if cls.labels:
             return cls.labels.get(value)
         else:
-            return value
+            return None if value == cls.na_value else value
 
     @classmethod
     def parse_from_row(cls, file: YearData, row: list):

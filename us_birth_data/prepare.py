@@ -138,6 +138,7 @@ def reduce(year_from=1968, year_to=9999, sample_size=0):
                 [x for x in df.columns.tolist() if x != fields.Births.name()],
                 as_index=False, dropna=False
             )[fields.Births.name()].sum()
+
             mdf = df if df.empty else pd.concat([mdf, df])
 
     mdf = mdf.astype(tc)

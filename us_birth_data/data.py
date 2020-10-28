@@ -3,7 +3,7 @@ from typing import List, Union
 
 import pandas as pd
 
-from us_birth_data.fields import Column, Births
+from us_birth_data.fields import Column, Births, targets
 
 data_path = Path(Path(__file__).parent, 'us_birth_data.parquet')
 
@@ -31,7 +31,13 @@ def load_data(columns: Union[Column, List[Column]] = None) -> pd.DataFrame:
 
         df = pd.read_parquet(data_path.as_posix(), columns=columns)
         cl = [x for x in df.columns.to_list() if x != n]
-        df = df.groupby(by=cl, as_index=False).sum()
+
+        cat_cols = df.columns[[isinstance(x, pd.CategoricalDtype) for x in df.dtypes]]
+        for cc in cat_cols:
+            df[cc] = df[cc].astype(str)
+
+        df = df.groupby(by=cl, dropna=False, as_index=False).sum()
+        df = df.astype({x.name(): x.pd_type for x in targets if x in cl})
     else:
         df = pd.read_parquet(data_path.as_posix())
 
