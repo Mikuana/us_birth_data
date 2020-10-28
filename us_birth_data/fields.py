@@ -340,8 +340,8 @@ class DeliveryMethod(Source, Target):
 
     @classmethod
     def remap(cls, data_frame: pd.DataFrame, **kwargs):
-        return data_frame[cls.name()].\
-            combine_first(cls.remap_final_route_method(data_frame)).\
+        return data_frame[cls.name()]. \
+            combine_first(cls.remap_final_route_method(data_frame)). \
             combine_first(cls.remap_ume(data_frame))
 
     @classmethod
@@ -494,8 +494,6 @@ class Births(Source, Target):
             return 2
         else:
             return data_frame[cls.name()].fillna(1)
-
-    # df = df.groupby([x for x in df.columns.tolist() if x != n], as_index=False)[n].sum()
 
 
 sources = _recurse_subclasses(Source)

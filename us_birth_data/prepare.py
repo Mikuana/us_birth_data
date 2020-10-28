@@ -98,7 +98,8 @@ def get_queue():
     return queue
 
 
-def stage_pq(year_from=1968, year_to=9999, sample_size=0):
+def reduce(year_from=1968, year_to=9999, sample_size=0):
+    tc = {x.name(): x.pd_type for x in fields.targets}
     mdf = pd.DataFrame()
 
     for file in YearData.__subclasses__():
@@ -113,6 +114,7 @@ def stage_pq(year_from=1968, year_to=9999, sample_size=0):
             print(f"{total} rows")
 
             fd = {x: [] for x in fields.sources}
+            print(f"Extracting raw data from {file.pub_file}")
             with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:
                 for ix, line in enumerate(tqdm(r, total=total)):
                     if sample_size and ix > sample_size:
@@ -126,27 +128,27 @@ def stage_pq(year_from=1968, year_to=9999, sample_size=0):
             df = pd.DataFrame.from_dict(fd)
 
             kw = dict(year=file.year)
+            print(f"Reshaping {str(file.year)} data")
             for t in fields.targets:
                 df[t.name()] = t.remap(df, **kw)
 
+            df = df[list(tc.keys())]
+            print(f"Grouping {str(file.year)} data")
+            df = df.groupby(
+                [x for x in df.columns.tolist() if x != fields.Births.name()],
+                as_index=False, dropna=False
+            )[fields.Births.name()].sum()
             mdf = df if df.empty else pd.concat([mdf, df])
 
-    tc = {x.name(): x.pd_type for x in fields.targets}
     mdf = mdf.astype(tc)
-    mdf = mdf[list(tc.keys())]  # reorder columns
-
-    cat_cols = mdf.columns[[isinstance(x, pd.CategoricalDtype) for x in mdf.dtypes]]
-    for cc in cat_cols:
-        mdf[cc] = mdf[cc].cat.remove_unused_categories()
-
     return mdf
 
 
-def generate_data_set():
+def generate_parquet():
     gzip_path.mkdir(exist_ok=True)
-
     for q in get_queue():
         stage_gzip(q)
 
-    df = stage_pq()
-    df.to_parquet(Path(Path(__file__).parent, 'us_birth_data.parquet'))
+    reduce().to_parquet(
+        Path(Path(__file__).parent, 'us_birth_data.parquet')
+    )
