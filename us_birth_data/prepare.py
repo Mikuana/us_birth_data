@@ -132,9 +132,7 @@ def stage_pq(year_from=1968, year_to=9999, sample_size=0):
 
             mdf = df if df.empty else pd.concat([mdf, df])
 
-    print(mdf[fields.AgeOfMotherSuppressed.name()])
     tc = {x.name(): x.pd_type for x in fields.targets}
-    print(tc)
     mdf = mdf.astype(tc)
     mdf = mdf[list(tc.keys())]  # reorder columns
 
@@ -153,5 +151,4 @@ def generate_data_set():
         stage_gzip(q)
 
     df = stage_pq()
-    # df = concatenate_years()
     df.to_parquet(Path(Path(__file__).parent, 'us_birth_data.parquet'))

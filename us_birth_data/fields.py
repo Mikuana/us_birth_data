@@ -343,12 +343,10 @@ class DeliveryMethod(Source, Target):
     }
 
     @classmethod
-    def remap(cls, df: pd.DataFrame) -> pd.Series:
-        df[cls.name()] = df[cls.name()].replace('Unknown', None)
-        df[cls.name()] = df[cls.name()]. \
-            combine_first(cls.remap_final_route_method(df)). \
-            combine_first(cls.remap_ume(df))
-        return df[cls.name()]
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        return data_frame[cls.name()].replace('Unknown', None).\
+            combine_first(cls.remap_final_route_method(data_frame)).\
+            combine_first(cls.remap_ume(data_frame))
 
     @classmethod
     def remap_final_route_method(cls, df: pd.DataFrame) -> pd.Series:
@@ -419,7 +417,7 @@ class AgeOfMother(Source, Target):
     """ Age of Mother """
     handler = Handlers.integer
     na_value = 99
-    pd_type = 'uint8'
+    pd_type = float
     positions = {
         Y1968: (38, 39),
         **{
@@ -439,19 +437,12 @@ class AgeOfMother(Source, Target):
         Y2003: (77, 78)
     }
 
-    # @classmethod
-    # def remap(cls, row: pd.Series):
-    #     return cls.remap_age_of_mother_suppressed(
-    #         getattr(row, AgeOfMotherSuppressed.name())
-    #     )
-    #
-    # @classmethod
-    # def remap_age_of_mother_suppressed(cls, value):
-    #     try:
-    #         return int(value)
-    #     except ValueError:
-    #         return None
-    #
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        recodes = {x: None for x in ('10-12 years', '50-54 years', 'Unknown')}
+        return data_frame[cls.name()].combine_first(
+            data_frame[AgeOfMotherSuppressed.name()].replace(recodes)
+        )
 
 
 class AgeOfMotherSuppressed(AgeOfMother):
@@ -502,14 +493,12 @@ class Births(Source, Target):
          Y1980, Y1981, Y1982, Y1983, Y1984)
     }
 
-    # # TODO: add this as a remap
-    # n = fields.Births.name()
-    # if n in df:
-    #     df[n] = df[n].fillna(1)
-    # elif file.year < 1972:
-    #     df[n] = 2
-    # else:
-    #     df[n] = 1
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        if kwargs.get('year') < 1972:
+            return 2
+        else:
+            return data_frame[cls.name()].fillna(1)
 
     # df = df.groupby([x for x in df.columns.tolist() if x != n], as_index=False)[n].sum()
 
@@ -521,5 +510,7 @@ targets = [
     t for t in targets
     if not any([t in _recurse_subclasses(x) for x in targets])
 ]
-
-targets = [Year, Month, DayOfWeek, State, SexOfChild, AgeOfMother]
+# print(targets)
+targets = [
+    Year, Month, DayOfWeek, State, SexOfChild, DeliveryMethod, AgeOfMother, Births
+]
