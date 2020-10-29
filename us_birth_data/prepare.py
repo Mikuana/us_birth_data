@@ -4,16 +4,14 @@ import subprocess
 from ftplib import FTP
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List
 
 import pandas as pd
 from tqdm import tqdm
 
-from us_birth_data import fields, files
+from us_birth_data import fields
 from us_birth_data.files import YearData
 
 gzip_path = Path('gz')
-pq_path = Path('pq')
 
 
 class FtpGet:
@@ -100,22 +98,27 @@ def get_queue():
     return queue
 
 
-def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.OriginalColumn] = None):
-    default_fields = (
-        fields.Births, fields.State, fields.OccurrenceState, fields.Month,
-        fields.Day, fields.DayOfWeek
-    )
-    field_list = field_list or default_fields
-    for file in files.YearData.__subclasses__():
-        if year_from <= file.year <= year_to:
-            with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:
-                print(f"Counting rows in {file.pub_file}")
-                total = sum(1 for _ in r)
-                print(f"{total} rows")
+def reduce(year_from=1968, year_to=9999, sample_size=0):
+    tc = {x.name(): x.pd_type for x in fields.targets}
+    mdf = pd.DataFrame()
 
-            fd = {x: [] for x in field_list if x.position(file)}
+    for file in YearData.__subclasses__():
+        if year_from <= file.year <= year_to:
+
+            print(f"Counting rows in {file.pub_file}")
+            if sample_size:
+                total = sample_size
+            else:
+                with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:
+                    total = sum(1 for _ in r)
+            print(f"{total} rows")
+
+            fd = {x: [] for x in fields.sources}
+            print(f"Extracting raw data from {file.pub_file}")
             with gzip.open(Path(gzip_path, file.pub_file), 'rb') as r:
-                for line in tqdm(r, total=total):
+                for ix, line in enumerate(tqdm(r, total=total)):
+                    if sample_size and ix > sample_size:
+                        break
                     if not line.isspace():
                         for k, v in fd.items():
                             fd[k].append(k.parse_from_row(file, line))
@@ -124,56 +127,29 @@ def stage_pq(year_from=1968, year_to=2019, field_list: List[fields.OriginalColum
             fd = dict(zip(new_keys, fd.values()))
             df = pd.DataFrame.from_dict(fd)
 
-            # field additions
-            df[fields.Year.name()] = file.year
+            kw = dict(year=file.year)
+            print(f"Reshaping {str(file.year)} data")
+            for t in fields.targets:
+                df[t.name()] = t.remap(df, **kw)
 
-            n = fields.Births.name()
-            if n in df:
-                df[n] = df[n].fillna(1)
-            elif file.year < 1972:
-                df[n] = 2
-            else:
-                df[n] = 1
+            df = df[list(tc.keys())]
+            print(f"Grouping {str(file.year)} data")
+            df = df.groupby(
+                [x for x in df.columns.tolist() if x != fields.Births.name()],
+                as_index=False, dropna=False
+            )[fields.Births.name()].sum()
 
-            df = df.groupby([x for x in df.columns.tolist() if x != n], as_index=False)[n].sum()
-            df.to_parquet(Path(pq_path, f"{file.__name__}.parquet"))
+            mdf = df if df.empty else pd.concat([mdf, df])
 
-
-def concatenate_years(year_from=1968, year_to=2015, columns: list = None) -> pd.DataFrame:
-    df = pd.DataFrame()
-    years = YearData.__subclasses__()
-    for yd in years:
-        if year_from <= yd.year <= year_to:
-            rd = yd.read_parquet(columns=columns)
-
-            if fields.DayOfWeek.name() not in rd and fields.Day.name() in rd:
-                rd[fields.DayOfWeek.name()] = pd.to_datetime(
-                    rd[['year', 'month', 'day']], errors='coerce'
-                ).dt.strftime('%A')
-
-            df = rd if df.empty else pd.concat([df, rd])
-
-    tc = {
-        x.name(): x.pd_type for x in
-        (fields.Year, fields.Month, fields.DayOfWeek, fields.State, fields.Births)
-    }
-    df = df.astype(tc)
-    df = df[list(tc.keys())]  # reorder columns
-
-    cat_cols = df.columns[[isinstance(x, pd.CategoricalDtype) for x in df.dtypes]]
-    for cc in cat_cols:
-        df[cc] = df[cc].cat.remove_unused_categories()
-
-    return df
+    mdf = mdf.astype(tc)
+    return mdf
 
 
-def generate_data_set():
+def generate_parquet():
     gzip_path.mkdir(exist_ok=True)
-    pq_path.mkdir(exist_ok=True)
-
     for q in get_queue():
         stage_gzip(q)
 
-    stage_pq()
-    df = concatenate_years()
-    df.to_parquet(Path(Path(__file__).parent, 'us_birth_data.parquet'))
+    reduce().to_parquet(
+        Path(Path(__file__).parent, 'us_birth_data.parquet')
+    )

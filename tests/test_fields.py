@@ -1,13 +1,13 @@
 import pytest
 
-from tests.utils import recurse_subclasses
 from us_birth_data import fields
+from us_birth_data._utils import _recurse_subclasses
 from us_birth_data.files import YearData
 
-original_columns = recurse_subclasses(fields.OriginalColumn)
+original_columns = _recurse_subclasses(fields.Source)
 
 
-class Xyz(fields.OriginalColumn):
+class Xyz(fields.Source):
     handler = fields.Handlers.integer
     positions = {YearData: (1, 2)}
     na_value = 9
@@ -15,17 +15,17 @@ class Xyz(fields.OriginalColumn):
 
 
 @pytest.mark.parametrize('raw,processed', [
-    ('01', 1),
-    ('1', 1)
+    (b'01', 1),
+    (b'1', 1)
 ])
 def test_handler_integer(raw, processed):
     assert fields.Handlers.integer(raw) == processed
 
 
 @pytest.mark.parametrize('raw,processed', [
-    ('01', '01'),
-    ('1', '1'),
-    (' ', ' ')
+    (b'01', '01'),
+    (b'1', '1'),
+    (b' ', ' ')
 ])
 def test_handler_character(raw, processed):
     assert fields.Handlers.character(raw) == processed
@@ -33,7 +33,7 @@ def test_handler_character(raw, processed):
 
 def test_snake_name():
     assert fields.Column.name() == 'column'
-    assert fields.OriginalColumn.name() == 'original_column'
+    assert fields.Source.name() == 'source'
 
 
 def test_position_map():
@@ -42,18 +42,12 @@ def test_position_map():
 
 def test_decode():
     assert Xyz.decode(1) == 'x'
-    assert Xyz.decode(9) == 'Unknown'
+    assert Xyz.decode(9) is None
+    assert Xyz.decode(99) == 'Unknown'
 
 
 def test_parse_from_row():
     assert Xyz.parse_from_row(YearData, '0123456789') == 'x'
-
-
-@pytest.mark.parametrize('column', original_columns)
-def test_labels(column):
-    """ All encoded original columns need a way to represent unknown values """
-    if column.labels:
-        assert 'Unknown' in column.labels.values(), "does not have an Unknown value label"
 
 
 @pytest.mark.parametrize('column', original_columns)

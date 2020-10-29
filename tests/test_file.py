@@ -1,7 +1,6 @@
 import re
 from datetime import date
 from pathlib import Path
-from uuid import uuid4
 
 import pandas as pd
 import pytest
@@ -24,6 +23,11 @@ def test_valid_year(year):
 @pytest.mark.parametrize('year', years)
 def test_valid_pub_file(year, pub_file_pat):
     assert pub_file_pat.fullmatch(year.pub_file)
+
+
+@pytest.mark.parametrize('year', years)
+def test_births_total(year):
+    assert year.births > 0
 
 
 @pytest.mark.parametrize('year', years)
