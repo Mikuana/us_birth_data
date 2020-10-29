@@ -24,61 +24,61 @@ class Y1968(YearData):
 class Y1969(YearData):
     pub_file = 'Nat1969.PUB.gz'
     year = 1969
-    births = 3599036
+    births = 3600206
 
 
 class Y1970(YearData):
     pub_file = 'Nat1970.PUB.gz'
     year = 1970
-    births = 3734914
+    births = 3737800
 
 
 class Y1971(YearData):
     pub_file = 'Nat1971.pub.gz'
     year = 1971
-    births = 3563126
+    births = 3563548
 
 
 class Y1972(YearData):
     pub_file = 'Nat1972.pub.gz'
     year = 1972
-    births = 3265895
+    births = 3266235
 
 
 class Y1973(YearData):
     pub_file = 'Nat1973.pub.gz'
     year = 1973
-    births = 3145703
+    births = 3146125
 
 
 class Y1974(YearData):
     pub_file = 'Nat1974.pb.gz'
     year = 1974
-    births = 3170341
+    births = 3170631
 
 
 class Y1975(YearData):
     pub_file = 'Nat1975.pb.gz'
     year = 1975
-    births = 3153393
+    births = 3153556
 
 
 class Y1976(YearData):
     pub_file = 'Nat1976.pb.gz'
     year = 1976
-    births = 3176287
+    births = 3176476
 
 
 class Y1977(YearData):
     pub_file = 'Nat1977.pb.gz'
     year = 1977
-    births = 3332076
+    births = 3332159
 
 
 class Y1978(YearData):
     pub_file = 'Nat1978.pb.gz'
     year = 1978
-    births = 3338233
+    births = 3338300
 
 
 class Y1979(YearData):
@@ -300,7 +300,7 @@ class Y2014(YearData):
 class Y2015(YearData):
     pub_file = 'Nat2015us.txt.gz'
     year = 2015
-    births = 3978497
+    births = 3988733
 
 
 class Y2016(YearData):

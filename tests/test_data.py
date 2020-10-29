@@ -7,8 +7,8 @@ from rumydata.field import Integer, Choice, Text, Field
 from rumydata.rules.cell import make_static_cell_rule
 
 from us_birth_data import Year, Month, DayOfWeek, State, Births
-from us_birth_data.data import data_path, load_data
 from us_birth_data import files
+from us_birth_data.data import data_path, load_data
 
 gt0 = make_static_cell_rule(lambda x: int(x) > 0, 'greater than 0')
 after1968 = make_static_cell_rule(lambda x: int(x) >= 1968, '1968 is earliest available data')
@@ -29,7 +29,8 @@ def test_parquet_data():
         'day_of_week': Choice(list(calendar.day_name), nullable=True),
         'state': Text(20, nullable=True),
         'delivery_method': Choice(['Vaginal', 'Cesarean'], nullable=True),
-        'sex_of_child': Choice(['Male', 'Female'], nullable=False),
+        'sex_of_child': Choice(['Male', 'Female']),
+        'birth_facility': Choice(['In Hospital', 'Not in Hospital'], nullable=True),
         'age_of_mother': Field(nullable=True, rules=[can_truncate_to_int]),
         'births': Integer(6, rules=[gt0])
     })
@@ -47,4 +48,10 @@ def test_single_column_grouping(column):
 
 @pytest.mark.parametrize('year', files.YearData.__subclasses__())
 def test_year_counts(year, loaded_data):
-    assert loaded_data[loaded_data['year'] == year.year]['births'].sum()
+    assert loaded_data[loaded_data['year'] == year.year]['births'].sum() == year.births
+
+
+def test_total_count(loaded_data):
+    year_sum = sum([x.births for x in files.YearData.__subclasses__()])
+    data_sum = loaded_data['births'].sum()
+    assert year_sum == data_sum
