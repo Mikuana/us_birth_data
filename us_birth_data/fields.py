@@ -71,7 +71,7 @@ class Year(Target):
     """
     Birth Year
 
-    And integer describing the year that the birth occurred. Although this is not
+    An integer describing the year that the birth occurred. Although this is not
     explicitly included in the raw data sets, it is implied by the year that the
     data set represents.
     """
@@ -84,7 +84,12 @@ class Year(Target):
 
 
 class Month(Source, Target):
-    """ Birth Month """
+    """
+    Birth Month
+
+    The month of the year that the birth occurred, represented as a full English
+    month name (e.g. February).
+    """
 
     handler = Handlers.integer
     labels = {
@@ -132,7 +137,12 @@ class Day(Source):
 
 
 class DayOfWeek(Source, Target):
-    """ Date of Birth Weekday """
+    """
+    Date of Birth Weekday
+
+    The day of the week that the birth occurred. Represented by the full English
+    name for the day (e.g. Monday).
+    """
 
     labels = {
         1: 'Sunday', 2: 'Monday', 3: 'Tuesday', 4: 'Wednesday', 5: 'Thursday',
@@ -174,7 +184,9 @@ class State(Source, Target):
 
     From 1968 to 2004 the data sets included the state (or territory) where
     the birth occurred. After 2004, state of occurrence is no longer included. This
-    field includes all 50 states, and the District of Columbia (i.e. Washington D.C.).
+    field includes all 50 states, the District of Columbia (i.e. Washington D.C.),
+    and also allows for territories, but currently territories are not included in
+    the data set.
     """
 
     pd_type = 'category'
@@ -323,7 +335,13 @@ class FinalRouteMethod(Source):
 
 
 class DeliveryMethod(Source, Target):
-    """ Delivery method recode """
+    """
+    Delivery method
+
+    A broad categorization of final delivery method, either Vaginal or Cesarean.
+    Attempts at Vaginal birth would be counted as Cesarean if that was the
+    ultimate result.
+    """
     handler = Handlers.integer
     labels = {1: 'Vaginal', 2: 'Cesarean'}
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
@@ -368,7 +386,11 @@ class DeliveryMethod(Source, Target):
 
 
 class SexOfChild(Source, Target):
-    """ Sex of child """
+    """
+    Sex of child
+
+    The binary sex of the child, represented as either Male or Female.
+    """
     handler = Handlers.integer
     labels = {1: 'Male', 2: 'Female'}
     pd_type = 'category'
@@ -498,7 +520,14 @@ class AttendantAtBirth(Source):
 
 
 class AgeOfMother(Source, Target):
-    """ Age of Mother """
+    """
+    Age of Mother
+
+    The age of the mother at time of delivery in single digit years. After 2004,
+    births to mothers aged 12 and under, or 50 and over were grouped, resulting
+    in uncertainty of the actual age, and in this data set the birth is handled
+    as missing for those cases.
+    """
     handler = Handlers.integer
     na_value = 99
     pd_type = float
