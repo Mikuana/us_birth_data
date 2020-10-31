@@ -554,12 +554,35 @@ class AgeOfMother(Source, Target):
     def remap(cls, data_frame: pd.DataFrame, **kwargs):
         recodes = {x: None for x in ('10-12 years', '50-54 years')}
         return data_frame[cls.name()].combine_first(
-            data_frame[AgeOfMotherSuppressed.name()].replace(recodes)
+            data_frame[AgeOfMother50.name()].replace(recodes)
+        ).combine_first(
+            data_frame[AgeOfMother41.name()].replace({'Under 15 years': None})
         )
 
 
-class AgeOfMotherSuppressed(AgeOfMother):
-    pd_type = str
+class AgeOfMother41(Source):
+    handler = Handlers.integer
+    na_value = None
+    labels = {
+        1: 'Under 15 years', 2: '15', 3: '16', 4: '17', 5: '18', 6: '19', 7: '20',
+        8: '21', 9: '22', 10: '23', 11: '24', 12: '25', 13: '26', 14: '27', 15: '28',
+        16: '29', 17: '30', 18: '31', 19: '32', 20: '33', 21: '34', 22: '35',
+        23: '36', 24: '37', 25: '38', 26: '39', 27: '40', 28: '41', 29: '42',
+        30: '43', 31: '44', 32: '45', 33: '46', 34: '47', 35: '48', 36: '49',
+        37: '50', 38: '51', 39: '52', 40: '53', 41: '54'
+    }
+
+    positions = {
+        **{
+            x: (72, 73) for x in
+            (Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998, Y1999, Y2000, Y2001, Y2002)
+        },
+        Y2003: (89, 90)
+    }
+
+
+class AgeOfMother50(Source):
+    handler = Handlers.integer
     labels = {
         12: '10-12 years', 13: '13', 14: '14', 15: '15', 16: '16', 17: '17',
         18: '18', 19: '19', 20: '20', 21: '21', 22: '22', 23: '23', 24: '24',
