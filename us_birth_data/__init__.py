@@ -8,7 +8,7 @@ from us_birth_data.fields import (
     AgeOfMother, Births
 )
 
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 __all__ = [
     'load_data', 'Year', 'Month', 'DayOfWeek', 'State', 'DeliveryMethod',
