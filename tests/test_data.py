@@ -29,9 +29,14 @@ layout = Layout({
 })
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def loaded_data():
     yield load_data()
+
+
+@pytest.fixture(scope='session')
+def annual_data(loaded_data):
+    yield loaded_data.groupby('year')['births'].sum()
 
 
 @pytest.mark.slow
@@ -53,8 +58,8 @@ def test_single_column_grouping(column):
 
 
 @pytest.mark.parametrize('year', files.YearData.__subclasses__())
-def test_year_counts(year, loaded_data):
-    assert loaded_data[loaded_data['year'] == year.year]['births'].sum() == year.births
+def test_year_counts(year, annual_data):
+    assert annual_data.loc[year.year] == year.births
 
 
 def test_total_count(loaded_data):
