@@ -1,9 +1,20 @@
 import re
+from typing import Tuple, Dict
 
 from pandas.api.types import CategoricalDtype
 
 from us_birth_data._utils import _recurse_subclasses
 from us_birth_data.files import *
+
+
+def _span(yf: YearData, yt: YearData, pf: int, pt: int = None) -> Dict[YearData, Tuple[int, int]]:
+    """
+    Map position across multiple years
+
+    A wrapper to simplify te repeated task of mapping positions across multiple years.
+    """
+    years = (x for x in YearData.__subclasses__() if yf.year <= x.year <= yt.year)
+    return {year: (pf, pt) if pt else (pf, pf) for year in years}
 
 
 class Handlers:
@@ -100,25 +111,10 @@ class Month(Source, Target):
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
     positions = {
         Y1968: (32, 33),
-        **{
-            x: (84, 85) for x in
-            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979, Y1980,
-             Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
-        },
-        **{
-            x: (172, 173) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
-             Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (19, 20) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011,
-             Y2012, Y2013)
-        },
-        **{
-            x: (13, 14) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
+        **_span(Y1969, Y1988, 84, 85),
+        **_span(Y1989, Y2002, 172, 173),
+        **_span(Y2003, Y2013, 19, 20),
+        **_span(Y2014, Y2019, 13, 14)
     }
 
 
@@ -127,13 +123,7 @@ class Day(Source):
 
     handler = Handlers.integer
     na_value = 99
-    positions = {
-        x: (86, 87) for x in
-        (
-            Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979, Y1980,
-            Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988
-        )
-    }
+    positions = _span(Y1969, Y1988, 86, 87)
 
 
 class DayOfWeek(Source, Target):
@@ -152,20 +142,9 @@ class DayOfWeek(Source, Target):
     handler = Handlers.integer
 
     positions = {
-        **{
-            x: (180, 180) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
-             Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (29, 29) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010,
-             Y2011, Y2012, Y2013)
-        },
-        **{
-            x: (23, 23) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
+        **_span(Y1989, Y2002, 180),
+        **_span(Y2003, Y2013, 29),
+        **_span(Y2014, Y2019, 23)
     }
 
     @classmethod
@@ -204,17 +183,8 @@ class State(Source, Target):
     }
     positions = {
         Y1968: (74, 75),
-        **{
-            x: (28, 29) for x in
-            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977,
-             Y1978, Y1979, Y1980, Y1981, Y1982)
-        },
-        **{x: (28, 29) for x in (Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)},
-        **{
-            x: (16, 17) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
+        **_span(Y1969, Y1988, 28, 29),
+        **_span(Y1989, Y2002, 16, 17)
     }
 
     @classmethod
@@ -254,15 +224,8 @@ class UmeVaginal(UmeColumn):
     """ Vaginal method of delivery """
 
     positions = {
-        **{
-            x: (217, 217) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (395, 395) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
-        }
+        **_span(Y1989, Y2002, 217),
+        **_span(Y2003, Y2010, 395)
     }
 
 
@@ -270,15 +233,8 @@ class UmeVBAC(UmeColumn):
     """ Vaginal birth after previous cesarean """
 
     positions = {
-        **{
-            x: (218, 218) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (396, 396) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
-        }
+        **_span(Y1989, Y2002, 218),
+        **_span(Y2003, Y2010, 396)
     }
 
 
@@ -286,15 +242,8 @@ class UmePrimaryCesarean(UmeColumn):
     """  Primary cesarean section """
 
     positions = {
-        **{
-            x: (219, 219) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (397, 397) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
-        }
+        **_span(Y1989, Y2002, 219),
+        **_span(Y2003, Y2010, 397)
     }
 
 
@@ -302,15 +251,8 @@ class UmeRepeatCesarean(UmeColumn):
     """ Repeat cesarean section """
 
     positions = {
-        **{
-            x: (220, 220) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (398, 398) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
-        }
+        **_span(Y1989, Y2002, 220),
+        **_span(Y2003, Y2010, 398)
     }
 
 
@@ -323,14 +265,8 @@ class FinalRouteMethod(Source):
     }
 
     positions = {
-        **{
-            x: (393, 393) for x in
-            (Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011, Y2012, Y2013)
-        },
-        **{
-            x: (402, 402) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
+        **_span(Y2004, Y2013, 393),
+        **_span(Y2014, Y2019, 402)
     }
 
 
@@ -346,14 +282,8 @@ class DeliveryMethod(Source, Target):
     labels = {1: 'Vaginal', 2: 'Cesarean'}
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
     positions = {
-        **{
-            x: (403, 403) for x in
-            (Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011, Y2012, Y2013)
-        },
-        **{
-            x: (408, 408) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        },
+        **_span(Y2005, Y2013, 403),
+        **_span(Y2014, Y2019, 408)
     }
 
     @classmethod
@@ -396,16 +326,8 @@ class SexOfChild(Source, Target):
     pd_type = 'category'
     positions = {
         Y1968: (31, 31),
-        **{
-            x: (35, 35) for x in
-            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978,
-             Y1979, Y1980, Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
-        },
-        **{
-            x: (189, 189) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
-             Y1999, Y2000, Y2001, Y2002)
-        }
+        **_span(Y1969, Y1988, 35),
+        **_span(Y1989, Y2002, 189)
     }
 
     @classmethod
@@ -418,15 +340,8 @@ class Sex(SexOfChild):
     handler = Handlers.character
     labels = {'M': 'Male', 'F': 'Female'}
     positions = {
-        **{
-            x: (436, 436) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011,
-             Y2012, Y2013)
-        },
-        **{
-            x: (475, 475) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        },
+        **_span(Y2003, Y2013, 436),
+        **_span(Y2014, Y2019, 475)
     }
 
 
@@ -440,20 +355,9 @@ class BirthFacility(Source, Target):
     labels = {1: "In Hospital", 2: "Not in Hospital"}
     pd_type = 'category'
     positions = {
-        **{
-            x: (9, 9) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (59, 59) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011,
-             Y2012, Y2013)
-        },
-        **{
-            x: (50, 50) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
+        **_span(Y1989, Y2002, 9),
+        **_span(Y2003, Y2013, 59),
+        **_span(Y2014, Y2019, 50)
     }
 
     @classmethod
@@ -489,10 +393,7 @@ class PlaceOfDelivery(Source):
         1: "Hospital Births", 2: "Nonhospital Births",
         3: "En route or born on arrival (BOA)", 9: "Not classifiable"
     }
-    positions = {
-        x: (80, 80) for x in
-        (Y1978, Y1979, Y1980, Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
-    }
+    positions = _span(Y1978, Y1988, 80)
 
 
 class PlaceOfDelivery1975(Source):
@@ -501,7 +402,7 @@ class PlaceOfDelivery1975(Source):
         1: "Hospital or Institution", 2: "Clinic, Center, or a Home",
         3: "Names places (Drs. Offices)", 4: "Street Address", 9: "Not classifiable"
     }
-    positions = {x: (80, 80) for x in (Y1975, Y1976, Y1977)}
+    positions = _span(Y1975, Y1977, 80)
 
 
 class AttendantAtBirth(Source):
@@ -512,10 +413,7 @@ class AttendantAtBirth(Source):
     }
     positions = {
         Y1968: (58, 58),
-        **{
-            x: (36, 36) for x in
-            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977)
-        }
+        **_span(Y1969, Y1977, 36)
     }
 
 
@@ -533,20 +431,9 @@ class AgeOfMother(Source, Target):
     pd_type = float
     positions = {
         Y1968: (38, 39),
-        **{
-            x: (41, 42) for x in
-            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978,
-             Y1979, Y1980, Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
-        },
-        **{
-            x: (70, 71) for x in
-            (Y1989, Y1990, Y1991)
-        },
-        **{
-            x: (91, 92) for x in
-            (Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998, Y1999,
-             Y2000, Y2001, Y2002)
-        },
+        **_span(Y1969, Y1988, 41, 42),
+        **_span(Y1989, Y1990, 70, 71),
+        **_span(Y1991, Y2002, 91, 92),
         Y2003: (77, 78)
     }
 
@@ -573,10 +460,7 @@ class AgeOfMother41(Source):
     }
 
     positions = {
-        **{
-            x: (72, 73) for x in
-            (Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
+        **_span(Y1991, Y2002, 72, 73),
         Y2003: (89, 90)
     }
 
@@ -593,14 +477,8 @@ class AgeOfMother50(Source):
     }
 
     positions = {
-        **{
-            x: (89, 90) for x in
-            (Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011, Y2012, Y2013)
-        },
-        **{
-            x: (75, 76) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
+        **_span(Y2004, Y2013, 89, 90),
+        **_span(Y2014, Y2019, 75, 76)
     }
 
 
@@ -623,11 +501,7 @@ class Births(Source, Target):
 
     pd_type = 'uint32'
     handler = Handlers.integer
-    positions = {
-        x: (208, 208) for x in
-        (Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979,
-         Y1980, Y1981, Y1982, Y1983, Y1984)
-    }
+    positions = _span(Y1972, Y1984, 208)
 
     @classmethod
     def remap(cls, data_frame: pd.DataFrame, **kwargs):
