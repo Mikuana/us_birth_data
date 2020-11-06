@@ -482,6 +482,84 @@ class AgeOfMother50(Source):
     }
 
 
+class ChildrenBornAlive(Source):
+    """
+    Number of children born alive, now living
+
+    Sum of all previous live births (now living and now dead) plus this one.
+    """
+    handler = Handlers.integer
+    na_value = 99
+    positions = {
+        Y1968: (47, 48),
+        **_span(Y1969, Y1988, 52, 53),
+        **_span(Y1989, Y2002, 100, 101),
+        **_span(Y2003, Y2005, 210, 211)
+    }
+
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        return data_frame[cls.name()].combine_first(
+            data_frame[ChildrenBornAlive06.name()].replace({8: None, 9: None})
+        )
+
+
+class ChildrenBornAlive06(ChildrenBornAlive):
+    """
+    Number of children born alive, now living recode
+
+    A recode of detail values.
+
+    1-7 Live birth order
+    8 Live birth order of 8 or more
+    9 Unknown or not stated
+    """
+    na_value = 9
+    positions = {
+        **_span(Y2006, Y2013, 212),
+        **_span(Y2014, Y2019, 179)
+    }
+
+
+class BirthOrder(Source):
+    """
+    Total Birth Order
+
+    Sum of all previous pregnancies plus this one
+    """
+    handler = Handlers.integer
+    na_value = 99
+    positions = {
+        **_span(Y1969, Y1988, 58, 59),
+        **_span(Y1989, Y2002, 103, 104),
+        **_span(Y2003, Y2005, 215, 216)
+    }
+
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        return data_frame[cls.name()].combine_first(
+            data_frame[BirthOrder06.name()].replace({8: None, 9: None})
+        )
+
+
+class BirthOrder06(BirthOrder):
+    """
+    Total Birth Order recode
+
+    Sum of all previous pregnancies plus this one
+
+    1-7 Total birth order
+    8 Total birth order of 8 or more
+    9 Unknown or not stated
+    """
+    handler = Handlers.integer
+    na_value = 9
+    positions = {
+        **_span(Y2006, Y2013, 217),
+        **_span(Y2014, Y2019, 182)
+    }
+
+
 class Births(Source, Target):
     """
     Number of births
