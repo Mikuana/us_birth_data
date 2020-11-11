@@ -7,9 +7,8 @@ from rumydata import Layout
 from rumydata.field import Integer, Choice, Text, Field
 from rumydata.rules.cell import make_static_cell_rule
 
-from us_birth_data import Year, Month, DayOfWeek, State, Births
-from us_birth_data import files
-from us_birth_data.data import load_data
+from us_birth_data import Year
+from us_birth_data import files, load_full_data
 
 gt0 = make_static_cell_rule(lambda x: int(x) > 0, 'greater than 0')
 after1968 = make_static_cell_rule(lambda x: int(x) >= 1968, '1968 is earliest available data')
@@ -31,12 +30,12 @@ layout = Layout({
 
 @pytest.fixture(scope='session')
 def loaded_data():
-    yield load_data()
+    yield load_full_data()
 
 
 @pytest.fixture(scope='session')
 def annual_data(loaded_data):
-    yield loaded_data.groupby('year')['births'].sum()
+    yield Year.load_data()
 
 
 @pytest.mark.slow
@@ -46,15 +45,6 @@ def test_parquet_data(loaded_data, column_name, column_def: Field):
     values = ['' if pd.isna(x) else str(x) for x in values]
     for value in values:
         assert not column_def.check_cell(value)
-
-
-@pytest.mark.parametrize('column', [
-    Year, Month, DayOfWeek, State
-])
-def test_single_column_grouping(column):
-    df = load_data(column)
-    assert df.columns.to_list() == [column.name(), Births.name()]
-    assert all(df.iloc[:, 0].value_counts() == 1)
 
 
 @pytest.mark.parametrize('year', files.YearData.__subclasses__())

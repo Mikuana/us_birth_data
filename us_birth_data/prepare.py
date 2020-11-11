@@ -5,6 +5,7 @@ import gzip
 import json
 import shutil
 import subprocess
+import urllib.error
 import urllib.request
 from ftplib import FTP
 from hashlib import sha256
@@ -214,21 +215,21 @@ def store_hashes(files: List[Path]):
     Store File Hashes
 
     Since this package includes data which are not necessarily provided as part
-    of the packge (i.e. they require downloading from an internet source), a sha256
-    hashsum is included with each file to ensure the integrity of all data. This
+    of the package (i.e. they require downloading from an internet source), a sha256
+    hash sum is included with each file to ensure the integrity of all data. This
     function calculates these hashes, then stores them in a JSON file that is
     distributed with the package.
     :param files:
     :return:
     """
     hp = Path(folder, "hashes.json")
-    hashes = {}
+    hash_output = {}
     for file in files:
         h = sha256()
         h.update(file.read_bytes())
-        hashes[file.name] = f"sha256::{h.hexdigest()}"
+        hash_output[file.name] = f"sha256::{h.hexdigest()}"
 
-    hp.write_text(json.dumps(hashes, indent=2))
+    hp.write_text(json.dumps(hash_output, indent=2))
 
 
 def split_data_by_column():
@@ -284,14 +285,24 @@ def prepare_data(**kwargs):
 
 def download_full_data():
     url = 'https://github.com/Mikuana/us_birth_data/releases/download/'
-    url += f'v{__version__}/{gzip_data.stem}'
+    url += f'v{__version__}/{gzip_data.name}'
     with TemporaryDirectory() as td:
         gzp = Path(td, gzip_data.stem)
+        # TODO: http error handling
         urllib.request.urlretrieve(url, gzp)
 
         h = sha256()
         h.update(gzp.read_bytes())
-        assert h.hexdigest() == hashes[gzip_data.name]
+        actual = f"sha256::" + h.hexdigest()
+        expected = hashes[gzip_data.name]
+
+        msg = (
+            f"Downloaded {url}\n"
+            f"Expected {expected}\n"
+            f"Received {actual}"
+        )
+        assert actual == expected, msg
 
         with gzip.open(gzp, 'rb') as f:
             full_data.write_bytes(f.read())
+            # TODO: check extracted file
