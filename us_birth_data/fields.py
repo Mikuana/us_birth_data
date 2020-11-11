@@ -482,6 +482,22 @@ class AgeOfMother50(Source):
     }
 
 
+class Parity(Target):
+    """
+    Parity
+
+    The number of times that the mother has been pregnant and carried the
+    the pregnancy to a viable gestational age (including this one).
+    """
+    pd_type = float
+
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        return data_frame[BirthOrderDetail.name()].combine_first(
+            data_frame[BirthOrderRecode.name()].replace({8: None, 9: None})
+        )
+
+
 class ChildrenBornAlive(Source):
     """
     Number of children born alive, now living
@@ -496,12 +512,6 @@ class ChildrenBornAlive(Source):
         **_span(Y1989, Y2002, 100, 101),
         **_span(Y2003, Y2005, 210, 211)
     }
-
-    @classmethod
-    def remap(cls, data_frame: pd.DataFrame, **kwargs):
-        return data_frame[cls.name()].combine_first(
-            data_frame[ChildrenBornAlive06.name()].replace({8: None, 9: None})
-        )
 
 
 class ChildrenBornAlive06(ChildrenBornAlive):
@@ -521,7 +531,7 @@ class ChildrenBornAlive06(ChildrenBornAlive):
     }
 
 
-class BirthOrder(Source):
+class BirthOrderDetail(Source):
     """
     Total Birth Order
 
@@ -535,14 +545,8 @@ class BirthOrder(Source):
         **_span(Y2003, Y2005, 215, 216)
     }
 
-    @classmethod
-    def remap(cls, data_frame: pd.DataFrame, **kwargs):
-        return data_frame[cls.name()].combine_first(
-            data_frame[BirthOrder06.name()].replace({8: None, 9: None})
-        )
 
-
-class BirthOrder06(BirthOrder):
+class BirthOrderRecode(BirthOrderDetail):
     """
     Total Birth Order recode
 
