@@ -10,5 +10,5 @@
   "parity.parquet": "sha256::e9c1e46a3c12ad10677ecacfc284c012950febee93ba1ddf858fb382da1e8922",
   "births.parquet": "sha256::0e4a4b2650799466239012766e54ca02724506b684d341fb084b8f8b650473a8",
   "us_birth_data.parquet": "sha256::1c0bdc72dc26d4ff323bc3621a77371bddedc30a6c508ea15441c48cd25b90ad",
-  "us_birth_data.parquet.gz": "sha256::9e1359d1e3bfa81164cf971dc2f66374ed3406e09b99385850a9f29e1bedad22"
+  "us_birth_data.parquet.gz": "sha256::860b5635d78d041e14ccd46e80fe0d3e13ee850a12379333f2c210033c6913f1"
 }
