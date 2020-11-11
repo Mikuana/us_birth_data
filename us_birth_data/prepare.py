@@ -273,7 +273,7 @@ def prepare_data(**kwargs):
     for q in generate_ftp_queue():
         stage_gzip(q)
 
-    reduce_kwargs = {x: kwargs.pop(x) for x in ['sample_size']}
+    reduce_kwargs = {x: kwargs.pop(x, None) for x in ['sample_size']}
     reduce(**reduce_kwargs).to_parquet(full_data)
 
     with gzip.open(gzip_data, 'wb') as f:
