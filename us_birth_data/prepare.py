@@ -9,6 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from us_birth_data import fields
+from us_birth_data.data import full_data_path, data_folder
 from us_birth_data.files import YearData
 
 gzip_path = Path('gz')
@@ -150,6 +151,21 @@ def generate_parquet():
     for q in get_queue():
         stage_gzip(q)
 
-    reduce().to_parquet(
-        Path(Path(__file__).parent, 'us_birth_data.parquet')
-    )
+    reduce().to_parquet(full_data_path)
+
+
+def split_data_by_column():
+    n = fields.Births.name()
+    y = fields.Year.name()
+
+    for field in fields.targets:
+        f = field.name()
+        columns = [y, f, n] if y != f else [y, n]
+        df = pd.read_parquet(full_data_path, columns=columns)
+        if isinstance(df[f].dtypes, pd.CategoricalDtype):
+            df[f] = df[f].astype(str)
+
+        df = df.groupby(by=[y, f] if y != f else y, dropna=False, as_index=False).sum()
+        df = df.astype({f: field.pd_type})
+        df.to_parquet(Path(data_folder, f"{f}.parquet"))
+

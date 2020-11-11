@@ -1,5 +1,4 @@
 # Data
-
 zip/
 gz/
 pdf/
@@ -156,4 +155,3 @@ cython_debug/
 
 # Remove previous ipynb_checkpoints
 #   git rm -r .ipynb_checkpoints/
-
