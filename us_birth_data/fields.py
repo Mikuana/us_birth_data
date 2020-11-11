@@ -3,6 +3,7 @@ from typing import Tuple, Dict
 
 from pandas.api.types import CategoricalDtype
 
+from us_birth_data import data
 from us_birth_data._utils import _recurse_subclasses
 from us_birth_data.files import *
 
@@ -76,6 +77,17 @@ class Target(Column):
     @classmethod
     def remap(cls, data_frame: pd.DataFrame, **kwargs):
         return data_frame[cls.name()]
+
+    @classmethod
+    def load_data(cls) -> pd.DataFrame:
+        """
+        Load field data
+
+        Read the longitudinal data provided with this package for this specific
+        field.
+        :return:
+        """
+        return pd.read_parquet(Path(data.folder, f"{cls.name()}.parquet"))
 
 
 class Year(Target):

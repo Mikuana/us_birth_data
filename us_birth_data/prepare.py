@@ -1,22 +1,35 @@
+"""
+Data Set Preparation
+"""
 import gzip
+import json
 import shutil
 import subprocess
+import urllib.request
 from ftplib import FTP
+from hashlib import sha256
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import List
 
 import pandas as pd
 from tqdm import tqdm
 
+from us_birth_data import __version__
 from us_birth_data import fields
-from us_birth_data.data import full_data_path, data_folder
+from us_birth_data.data import folder, full_data, gzip_data, hashes
 from us_birth_data.files import YearData
 
 gzip_path = Path('gz')
 
 
 class FtpGet:
-    """ Context manager class to handle the download of data set archives and documentation """
+    """
+    FTP File Retriever
+
+    Context manager class to handle the download of data set archives and
+    documentation.
+    """
     host = 'ftp.cdc.gov'
     data_set_path = '/pub/Health_Statistics/NCHS/Datasets/DVS/natality'
 
@@ -31,8 +44,27 @@ class FtpGet:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.ftp.close()
 
-    def get_file(self, file_name, destination: Path):
+    def list_data_sets(self):
+        """
+        List Data Sets
+
+        A convenience wrapper to display the list of available data sets for
+        download.
+        """
+        self.ftp.cwd(self.data_set_path)
+        return self.ftp.nlst()
+
+    def get_data_set(self, file_name, destination: Path):
+        """
+        Get Data Set
+
+        Download a file from FTP server, providing progress bar
+        :param file_name: the name of the file to download
+        :param destination: the destination of the file, as a pathlib.Path
+        :return:
+        """
         p = Path(destination, file_name)
+        self.ftp.cwd(self.data_set_path)
         total = self.ftp.size(file_name)
 
         print(f"Starting download of {file_name}")
@@ -44,15 +76,6 @@ class FtpGet:
                     f.write(chunk)
 
                 self.ftp.retrbinary(f'RETR {file_name}', cb)
-        return p
-
-    def list_data_sets(self):
-        self.ftp.cwd(self.data_set_path)
-        return self.ftp.nlst()
-
-    def get_data_set(self, file_name, destination: Path):
-        self.ftp.cwd(self.data_set_path)
-        self.get_file(file_name, destination)
 
 
 def zip_convert(zip_file):
@@ -80,6 +103,14 @@ def zip_convert(zip_file):
 
 
 def stage_gzip(file_name):
+    """
+    Stage FTP Data Set as Gzip
+
+    A convenience wrapper to obtain a single year file archive from the FTP server,
+    decompress the data, then recompress as Gzip and place in a local cache.
+
+    :param file_name: the name of the data set archive on the FTP server
+    """
     with TemporaryDirectory() as td:
         with FtpGet() as ftp:
             file_path = Path(td, file_name)
@@ -87,7 +118,16 @@ def stage_gzip(file_name):
         zip_convert(file_path)
 
 
-def get_queue():
+def generate_ftp_queue() -> List[str]:
+    """
+    Generate FTP Queue
+
+    Compare the cache of Gzip data sets to those available on the FTP server,
+    and create a list of files that are missing from the local.
+
+    :return: a list of data set files that need to be downloaded from the FTP
+        server.
+    """
     queue = []
     with FtpGet() as ftp:
         available = ftp.list_data_sets()
@@ -99,7 +139,30 @@ def get_queue():
     return queue
 
 
-def reduce(year_from=1968, year_to=9999, sample_size=0):
+def reduce(year_from=1968, year_to=9999, sample_size=0) -> pd.DataFrame:
+    """
+    Data Set Reduction
+
+    Iterate through files and fields defined in the package to extract specified
+    data from the fixed width files store in the local Gzip cache, and aggregate
+    the results to reduce the size of the final DataFrame.
+
+    While this process is CPU intensive, it has a reasonable impact on memory
+    due to the fact that Gzip files can be inflated in blocks. This eliminates
+    the need to inflate the entire file either in memory or on disk.
+
+    :param year_from: the earliest year that you want to include in the reduction.
+        By default, starts at the earliest available year.
+    :param year_to: the latest year that you want to include in the reduction.
+        By default, this value will include all future years of data.
+    :param sample_size: the number of records that you want to sample from each
+        annual file before moving on to the next. This is extremely useful when
+        developing and testing new field mappings. By default, will include all
+        records from all years.
+
+    :return: a pandas.DataFrame containing the minimum possible number of records,
+        aggregated by birth counts.
+    """
     tc = {x.name(): x.pd_type for x in fields.targets}
     mdf = pd.DataFrame()
 
@@ -146,26 +209,89 @@ def reduce(year_from=1968, year_to=9999, sample_size=0):
     return mdf
 
 
-def generate_parquet():
-    gzip_path.mkdir(exist_ok=True)
-    for q in get_queue():
-        stage_gzip(q)
+def store_hashes(files: List[Path]):
+    """
+    Store File Hashes
 
-    reduce().to_parquet(full_data_path)
+    Since this package includes data which are not necessarily provided as part
+    of the packge (i.e. they require downloading from an internet source), a sha256
+    hashsum is included with each file to ensure the integrity of all data. This
+    function calculates these hashes, then stores them in a JSON file that is
+    distributed with the package.
+    :param files:
+    :return:
+    """
+    hp = Path(folder, "hashes.json")
+    hashes = {}
+    for file in files:
+        h = sha256()
+        h.update(file.read_bytes())
+        hashes[file.name] = f"sha256::{h.hexdigest()}"
+
+    hp.write_text(json.dumps(hashes, indent=2))
 
 
 def split_data_by_column():
+    """
+    Split full data into smaller sets
+
+    Reduce the size of the overall data by limiting to just three fields and
+    aggregating. This makes it possible to package a longitudinal data for every
+    field in the package.
+
+    :return: yields a pathlib.Path for each generated file
+    """
     n = fields.Births.name()
     y = fields.Year.name()
 
     for field in fields.targets:
         f = field.name()
         columns = [y, f, n] if y != f else [y, n]
-        df = pd.read_parquet(full_data_path, columns=columns)
+        df = pd.read_parquet(full_data, columns=columns)
         if isinstance(df[f].dtypes, pd.CategoricalDtype):
             df[f] = df[f].astype(str)
 
         df = df.groupby(by=[y, f] if y != f else y, dropna=False, as_index=False).sum()
         df = df.astype({f: field.pd_type})
-        df.to_parquet(Path(data_folder, f"{f}.parquet"))
+        p = Path(folder, f"{f}.parquet")
+        df.to_parquet(p)
+        yield p
 
+
+def prepare_data(**kwargs):
+    """
+    Prepare Package Data
+
+    Performs the complete set of actions necessary to process data for use in
+    this package. Will download all available data sets from FTP server, will
+    recompress the data as gzip, will remap and reduce the resulting data sets,
+    break into a collection of smaller cardinality tables, then store a set of
+    hashes.
+    """
+    gzip_path.mkdir(exist_ok=True)
+    for q in generate_ftp_queue():
+        stage_gzip(q)
+
+    reduce_kwargs = {x: kwargs.pop(x) for x in ['sample_size']}
+    reduce(**reduce_kwargs).to_parquet(full_data)
+
+    with gzip.open(gzip_data, 'wb') as f:
+        f.write(full_data.read_bytes())
+
+    files = list(split_data_by_column()) + [full_data, gzip_data]
+    store_hashes(files)
+
+
+def download_full_data():
+    url = 'https://github.com/Mikuana/us_birth_data/releases/download/'
+    url += f'v{__version__}/{gzip_data.stem}'
+    with TemporaryDirectory() as td:
+        gzp = Path(td, gzip_data.stem)
+        urllib.request.urlretrieve(url, gzp)
+
+        h = sha256()
+        h.update(gzp.read_bytes())
+        assert h.hexdigest() == hashes[gzip_data.name]
+
+        with gzip.open(gzp, 'rb') as f:
+            full_data.write_bytes(f.read())

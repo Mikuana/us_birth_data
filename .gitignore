@@ -1,5 +1,5 @@
 # Data
-/us_birth_data/data/us_birth_data.parquet
+/us_birth_data/data/us_birth_data.parquet*
 zip/
 gz/
 pdf/
