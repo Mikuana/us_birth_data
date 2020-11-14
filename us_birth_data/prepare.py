@@ -13,6 +13,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List
 
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -199,11 +200,17 @@ def reduce(year_from=1968, year_to=9999, sample_size=0) -> pd.DataFrame:
 
             df = df[list(tc.keys())]
             print(f"Grouping {str(file.year)} data")
+
+            for col in df.dtypes:
+                if isinstance(col, pd.CategoricalDtype):
+                    df[col] = col.cat.add_categories('NaN').fillna('NaN')
+
             df = df.groupby(
                 [x for x in df.columns.tolist() if x != fields.Births.name()],
                 as_index=False, dropna=False
             )[fields.Births.name()].sum()
 
+            df = df.replace('NaN', np.nan)
             mdf = df if df.empty else pd.concat([mdf, df])
 
     mdf = mdf.astype(tc)
@@ -232,7 +239,7 @@ def store_hashes(files: List[Path]):
     hp.write_text(json.dumps(hash_output, indent=2))
 
 
-def split_data_by_column():
+def split_data_by_column() -> list:
     """
     Split full data into smaller sets
 
@@ -240,23 +247,24 @@ def split_data_by_column():
     aggregating. This makes it possible to package a longitudinal data for every
     field in the package.
 
-    :return: yields a pathlib.Path for each generated file
+    :return: a list of pathlib.Path objects for each generated file
     """
     n = fields.Births.name()
     y = fields.Year.name()
-
+    outputs = []
     for field in fields.targets:
         f = field.name()
         columns = [y, f, n] if y != f else [y, n]
         df = pd.read_parquet(full_data, columns=columns)
         if isinstance(df[f].dtypes, pd.CategoricalDtype):
-            df[f] = df[f].astype(str)
+            df[f] = df[f].cat.add_categories('NaN').fillna('NaN')
 
         df = df.groupby(by=[y, f] if y != f else y, dropna=False, as_index=False).sum()
-        df = df.astype({f: field.pd_type})
+        df = df.replace('NaN', np.nan)
         p = Path(folder, f"{f}.parquet")
         df.to_parquet(p)
-        yield p
+        outputs.append(p)
+    return outputs
 
 
 def prepare_data(**kwargs):
@@ -279,7 +287,7 @@ def prepare_data(**kwargs):
     with gzip.open(gzip_data, 'wb') as f:
         f.write(full_data.read_bytes())
 
-    files = list(split_data_by_column()) + [full_data, gzip_data]
+    files = split_data_by_column() + [full_data, gzip_data]
     store_hashes(files)
 
 

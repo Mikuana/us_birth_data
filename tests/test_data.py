@@ -7,8 +7,9 @@ from rumydata import Layout
 from rumydata.field import Integer, Choice, Text, Field
 from rumydata.rules.cell import make_static_cell_rule
 
-from us_birth_data import Year
-from us_birth_data import files, load_full_data
+from us_birth_data.fields import targets, Target
+from us_birth_data import Year, Births
+from us_birth_data import files
 
 gt0 = make_static_cell_rule(lambda x: int(x) > 0, 'greater than 0')
 after1968 = make_static_cell_rule(lambda x: int(x) >= 1968, '1968 is earliest available data')
@@ -29,30 +30,25 @@ layout = Layout({
 
 
 @pytest.fixture(scope='session')
-def loaded_data():
-    yield load_full_data()
-
-
-@pytest.fixture(scope='session')
-def annual_data(loaded_data):
+def annual_data():
     yield Year.load_data()
 
 
-@pytest.mark.slow
-@pytest.mark.parametrize('column_name,column_def', layout.layout.items())
-def test_parquet_data(loaded_data, column_name, column_def: Field):
-    values = loaded_data[column_name].unique().tolist()
+@pytest.mark.parametrize('target', targets)
+def test_parquet_data(target: Target):
+    values = target.load_data()[target.name()].unique().tolist()
     values = ['' if pd.isna(x) else str(x) for x in values]
     for value in values:
-        assert not column_def.check_cell(value)
+        assert not layout.layout[target.name()].check_cell(value)
 
 
 @pytest.mark.parametrize('year', files.YearData.__subclasses__())
 def test_year_counts(year, annual_data):
-    assert annual_data.loc[year.year] == year.births
+    data_count = annual_data[annual_data[Year.name()] == year.year][Births.name()].values[0]
+    assert data_count == year.births
 
 
-def test_total_count(loaded_data):
+def test_total_count(annual_data):
     year_sum = sum([x.births for x in files.YearData.__subclasses__()])
-    data_sum = loaded_data['births'].sum()
+    data_sum = annual_data[Births.name()].sum()
     assert year_sum == data_sum

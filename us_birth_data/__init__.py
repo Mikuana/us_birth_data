@@ -12,6 +12,6 @@ __version__ = '0.0.6'
 
 __all__ = [
     'Year', 'Month', 'DayOfWeek', 'State', 'DeliveryMethod',
-    'SexOfChild', 'AgeOfMother', 'Parity', 'Births',
+    'SexOfChild', 'BirthFacility', 'AgeOfMother', 'Parity', 'Births',
     'load_full_data'
 ]
