@@ -4,7 +4,7 @@ from datetime import date
 import pandas as pd
 import pytest
 from rumydata import Layout
-from rumydata.field import Integer, Choice, Text, Field
+from rumydata.field import Integer, Choice, Text, Field, Currency
 from rumydata.rules.cell import make_static_cell_rule
 
 from us_birth_data.fields import targets, Target
@@ -24,6 +24,7 @@ layout = Layout({
     'delivery_method': Choice(['Vaginal', 'Cesarean'], nullable=True),
     'sex_of_child': Choice(['Male', 'Female']),
     'birth_facility': Choice(['In Hospital', 'Not in Hospital'], nullable=True),
+    'parity': Currency(3, nullable=True),
     'age_of_mother': Field(nullable=True, rules=[can_truncate_to_int]),
     'births': Integer(6, rules=[gt0])
 })

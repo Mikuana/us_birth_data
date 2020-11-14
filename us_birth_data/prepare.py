@@ -259,7 +259,7 @@ def split_data_by_column() -> list:
         if isinstance(df[f].dtypes, pd.CategoricalDtype):
             df[f] = df[f].cat.add_categories('NaN').fillna('NaN')
 
-        df = df.groupby(by=[y, f] if y != f else y, dropna=False, as_index=False).sum()
+        df = df.groupby(by=[y, f] if y != f else y, dropna=False, as_index=False, observed=True).sum()
         df = df.replace('NaN', np.nan)
         p = Path(folder, f"{f}.parquet")
         df.to_parquet(p)
