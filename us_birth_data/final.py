@@ -7,7 +7,6 @@ from urllib import request, error
 
 import pandas as pd
 
-from us_birth_data import __version__
 from us_birth_data.data import full_data, gzip_data, hashes
 from us_birth_data.fields import Target
 
@@ -46,9 +45,10 @@ def download_full_data(destination: [Union, str] = None) -> Path:
     :return: path to downloaded birth data file
     """
 
+    from us_birth_data import __version__ as v
     destination = destination or full_data
     url = 'https://github.com/Mikuana/us_birth_data/releases/download/'
-    url += f'v{__version__}/{gzip_data.name}'
+    url += f'{v}/{gzip_data.name}'
     with TemporaryDirectory() as td:
         gzp = Path(td, gzip_data.stem)
 
