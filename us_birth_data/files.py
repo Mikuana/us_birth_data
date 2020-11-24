@@ -4,6 +4,14 @@ import pandas as pd
 
 
 class YearData:
+    """
+    Base Year Data
+
+    All annual files are mapped to a class which describes the name of the data
+    file, the year (as an integer), and a count of expected births for that year.
+    These attributes are used to assist in processing of raw files, and testing
+    of outputs.
+    """
     pub_file: str = None
     year: int = None
     births: int = None

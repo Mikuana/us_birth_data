@@ -39,6 +39,14 @@ class Column:
 
 
 class Source(Column):
+    """
+    Source Column
+
+    A column that exists in the source fixed-width-files. This class maps positions,
+    NA value placeholders, and data labels if applicable. Source columns are not
+    necessarily included in the final output, but are instead used to provide data
+    for Target columns.
+    """
     handler = None
     na_value = None
     positions: dict = {}
@@ -72,6 +80,13 @@ class Source(Column):
 
 
 class Target(Column):
+    """
+    Target Column
+
+    A column which is included in the final data output. This includes a pandas
+    data type, and methods to combine multiple Source columns together when
+    necessary.
+    """
     pd_type: str = None
 
     @classmethod
@@ -131,7 +146,12 @@ class Month(Source, Target):
 
 
 class Day(Source):
-    """ Birth Day of Month """
+    """
+    Birth Day of Month
+
+    The numeric day of month when the birth occurred. Eventually removed and
+    replaced with day of week for privacy reasons.
+    """
 
     handler = Handlers.integer
     na_value = 99
@@ -226,13 +246,13 @@ class OccurrenceState(State):
     }
 
 
-class UmeColumn(Source):
+class _UmeColumn(Source):
     handler = Handlers.integer
     labels = {1: "Yes", 2: "No", 8: "Not on Certificate"}
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
 
 
-class UmeVaginal(UmeColumn):
+class UmeVaginal(_UmeColumn):
     """ Vaginal method of delivery """
 
     positions = {
@@ -241,7 +261,7 @@ class UmeVaginal(UmeColumn):
     }
 
 
-class UmeVBAC(UmeColumn):
+class UmeVBAC(_UmeColumn):
     """ Vaginal birth after previous cesarean """
 
     positions = {
@@ -250,7 +270,7 @@ class UmeVBAC(UmeColumn):
     }
 
 
-class UmePrimaryCesarean(UmeColumn):
+class UmePrimaryCesarean(_UmeColumn):
     """  Primary cesarean section """
 
     positions = {
@@ -259,7 +279,7 @@ class UmePrimaryCesarean(UmeColumn):
     }
 
 
-class UmeRepeatCesarean(UmeColumn):
+class UmeRepeatCesarean(_UmeColumn):
     """ Repeat cesarean section """
 
     positions = {

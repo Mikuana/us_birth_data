@@ -5,7 +5,7 @@ from us_birth_data._utils import _recurse_subclasses
 from us_birth_data.files import YearData
 
 original_columns = _recurse_subclasses(fields.Source)
-original_columns = [x for x in original_columns if x != fields.UmeColumn]
+original_columns = [x for x in original_columns if x != fields._UmeColumn]
 
 
 class Xyz(fields.Source):
