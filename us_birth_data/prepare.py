@@ -5,8 +5,6 @@ import gzip
 import json
 import shutil
 import subprocess
-import urllib.error
-import urllib.request
 from ftplib import FTP
 from hashlib import sha256
 from pathlib import Path
@@ -17,9 +15,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from us_birth_data import __version__
 from us_birth_data import fields
-from us_birth_data.data import folder, full_data, gzip_data, hashes
+from us_birth_data.data import folder, full_data, gzip_data
 from us_birth_data.files import YearData
 
 gzip_path = Path('gz')
@@ -291,26 +288,6 @@ def prepare_data(**kwargs):
     store_hashes(files)
 
 
-def download_full_data():
-    url = 'https://github.com/Mikuana/us_birth_data/releases/download/'
-    url += f'v{__version__}/{gzip_data.name}'
-    with TemporaryDirectory() as td:
-        gzp = Path(td, gzip_data.stem)
-        # TODO: http error handling
-        urllib.request.urlretrieve(url, gzp)
-
-        h = sha256()
-        h.update(gzp.read_bytes())
-        actual = f"sha256::" + h.hexdigest()
-        expected = hashes[gzip_data.name]
-
-        msg = (
-            f"Downloaded {url}\n"
-            f"Expected {expected}\n"
-            f"Received {actual}"
-        )
-        assert actual == expected, msg
-
-        with gzip.open(gzp, 'rb') as f:
-            full_data.write_bytes(f.read())
-            # TODO: check extracted file
+if __name__ == '__main__':
+    # split_data_by_column()
+    prepare_data()
