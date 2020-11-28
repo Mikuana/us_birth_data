@@ -1,1 +1,2 @@
-include us_birth_data/us_birth_data.parquet
+include us_birth_data/data/*.parquet
+!include us_birth_data/data/us_birth_data.parquet*

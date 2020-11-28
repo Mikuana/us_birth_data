@@ -1,5 +1,5 @@
 # Data
-
+/us_birth_data/data/us_birth_data.parquet*
 zip/
 gz/
 pdf/
@@ -156,4 +156,3 @@ cython_debug/
 
 # Remove previous ipynb_checkpoints
 #   git rm -r .ipynb_checkpoints/
-

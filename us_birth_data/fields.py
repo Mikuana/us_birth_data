@@ -1,9 +1,21 @@
 import re
+from typing import Tuple, Dict
 
 from pandas.api.types import CategoricalDtype
 
+from us_birth_data import data
 from us_birth_data._utils import _recurse_subclasses
 from us_birth_data.files import *
+
+
+def _span(yf: YearData, yt: YearData, pf: int, pt: int = None) -> Dict[YearData, Tuple[int, int]]:
+    """
+    Map position across multiple years
+
+    A wrapper to simplify te repeated task of mapping positions across multiple years.
+    """
+    years = (x for x in YearData.__subclasses__() if yf.year <= x.year <= yt.year)
+    return {year: (pf, pt) if pt else (pf, pf) for year in years}
 
 
 class Handlers:
@@ -27,6 +39,14 @@ class Column:
 
 
 class Source(Column):
+    """
+    Source Column
+
+    A column that exists in the source fixed-width-files. This class maps positions,
+    NA value placeholders, and data labels if applicable. Source columns are not
+    necessarily included in the final output, but are instead used to provide data
+    for Target columns.
+    """
     handler = None
     na_value = None
     positions: dict = {}
@@ -60,11 +80,29 @@ class Source(Column):
 
 
 class Target(Column):
+    """
+    Target Column
+
+    A column which is included in the final data output. This includes a pandas
+    data type, and methods to combine multiple Source columns together when
+    necessary.
+    """
     pd_type: str = None
 
     @classmethod
     def remap(cls, data_frame: pd.DataFrame, **kwargs):
         return data_frame[cls.name()]
+
+    @classmethod
+    def load_data(cls) -> pd.DataFrame:
+        """
+        Load field data
+
+        Read the longitudinal data provided with this package for this specific
+        field.
+        :return:
+        """
+        return pd.read_parquet(Path(data.folder, f"{cls.name()}.parquet"))
 
 
 class Year(Target):
@@ -100,40 +138,24 @@ class Month(Source, Target):
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
     positions = {
         Y1968: (32, 33),
-        **{
-            x: (84, 85) for x in
-            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979, Y1980,
-             Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
-        },
-        **{
-            x: (172, 173) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
-             Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (19, 20) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011,
-             Y2012, Y2013)
-        },
-        **{
-            x: (13, 14) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
+        **_span(Y1969, Y1988, 84, 85),
+        **_span(Y1989, Y2002, 172, 173),
+        **_span(Y2003, Y2013, 19, 20),
+        **_span(Y2014, Y2019, 13, 14)
     }
 
 
 class Day(Source):
-    """ Birth Day of Month """
+    """
+    Birth Day of Month
+
+    The numeric day of month when the birth occurred. Eventually removed and
+    replaced with day of week for privacy reasons.
+    """
 
     handler = Handlers.integer
     na_value = 99
-    positions = {
-        x: (86, 87) for x in
-        (
-            Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979, Y1980,
-            Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988
-        )
-    }
+    positions = _span(Y1969, Y1988, 86, 87)
 
 
 class DayOfWeek(Source, Target):
@@ -152,20 +174,9 @@ class DayOfWeek(Source, Target):
     handler = Handlers.integer
 
     positions = {
-        **{
-            x: (180, 180) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
-             Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (29, 29) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010,
-             Y2011, Y2012, Y2013)
-        },
-        **{
-            x: (23, 23) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
+        **_span(Y1989, Y2002, 180),
+        **_span(Y2003, Y2013, 29),
+        **_span(Y2014, Y2019, 23)
     }
 
     @classmethod
@@ -204,17 +215,8 @@ class State(Source, Target):
     }
     positions = {
         Y1968: (74, 75),
-        **{
-            x: (28, 29) for x in
-            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977,
-             Y1978, Y1979, Y1980, Y1981, Y1982)
-        },
-        **{x: (28, 29) for x in (Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)},
-        **{
-            x: (16, 17) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
+        **_span(Y1969, Y1988, 28, 29),
+        **_span(Y1989, Y2002, 16, 17)
     }
 
     @classmethod
@@ -244,73 +246,45 @@ class OccurrenceState(State):
     }
 
 
-class UmeColumn(Source):
+class _UmeColumn(Source):
     handler = Handlers.integer
     labels = {1: "Yes", 2: "No", 8: "Not on Certificate"}
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
 
 
-class UmeVaginal(UmeColumn):
+class UmeVaginal(_UmeColumn):
     """ Vaginal method of delivery """
 
     positions = {
-        **{
-            x: (217, 217) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (395, 395) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
-        }
+        **_span(Y1989, Y2002, 217),
+        **_span(Y2003, Y2010, 395)
     }
 
 
-class UmeVBAC(UmeColumn):
+class UmeVBAC(_UmeColumn):
     """ Vaginal birth after previous cesarean """
 
     positions = {
-        **{
-            x: (218, 218) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (396, 396) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
-        }
+        **_span(Y1989, Y2002, 218),
+        **_span(Y2003, Y2010, 396)
     }
 
 
-class UmePrimaryCesarean(UmeColumn):
+class UmePrimaryCesarean(_UmeColumn):
     """  Primary cesarean section """
 
     positions = {
-        **{
-            x: (219, 219) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (397, 397) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
-        }
+        **_span(Y1989, Y2002, 219),
+        **_span(Y2003, Y2010, 397)
     }
 
 
-class UmeRepeatCesarean(UmeColumn):
+class UmeRepeatCesarean(_UmeColumn):
     """ Repeat cesarean section """
 
     positions = {
-        **{
-            x: (220, 220) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (398, 398) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010)
-        }
+        **_span(Y1989, Y2002, 220),
+        **_span(Y2003, Y2010, 398)
     }
 
 
@@ -323,14 +297,8 @@ class FinalRouteMethod(Source):
     }
 
     positions = {
-        **{
-            x: (393, 393) for x in
-            (Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011, Y2012, Y2013)
-        },
-        **{
-            x: (402, 402) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
+        **_span(Y2004, Y2013, 393),
+        **_span(Y2014, Y2019, 402)
     }
 
 
@@ -346,14 +314,8 @@ class DeliveryMethod(Source, Target):
     labels = {1: 'Vaginal', 2: 'Cesarean'}
     pd_type = CategoricalDtype(categories=list(labels.values()), ordered=True)
     positions = {
-        **{
-            x: (403, 403) for x in
-            (Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011, Y2012, Y2013)
-        },
-        **{
-            x: (408, 408) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        },
+        **_span(Y2005, Y2013, 403),
+        **_span(Y2014, Y2019, 408)
     }
 
     @classmethod
@@ -396,16 +358,8 @@ class SexOfChild(Source, Target):
     pd_type = 'category'
     positions = {
         Y1968: (31, 31),
-        **{
-            x: (35, 35) for x in
-            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978,
-             Y1979, Y1980, Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
-        },
-        **{
-            x: (189, 189) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998,
-             Y1999, Y2000, Y2001, Y2002)
-        }
+        **_span(Y1969, Y1988, 35),
+        **_span(Y1989, Y2002, 189)
     }
 
     @classmethod
@@ -418,15 +372,8 @@ class Sex(SexOfChild):
     handler = Handlers.character
     labels = {'M': 'Male', 'F': 'Female'}
     positions = {
-        **{
-            x: (436, 436) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011,
-             Y2012, Y2013)
-        },
-        **{
-            x: (475, 475) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        },
+        **_span(Y2003, Y2013, 436),
+        **_span(Y2014, Y2019, 475)
     }
 
 
@@ -440,20 +387,9 @@ class BirthFacility(Source, Target):
     labels = {1: "In Hospital", 2: "Not in Hospital"}
     pd_type = 'category'
     positions = {
-        **{
-            x: (9, 9) for x in
-            (Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997,
-             Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
-        **{
-            x: (59, 59) for x in
-            (Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011,
-             Y2012, Y2013)
-        },
-        **{
-            x: (50, 50) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
+        **_span(Y1989, Y2002, 9),
+        **_span(Y2003, Y2013, 59),
+        **_span(Y2014, Y2019, 50)
     }
 
     @classmethod
@@ -489,10 +425,7 @@ class PlaceOfDelivery(Source):
         1: "Hospital Births", 2: "Nonhospital Births",
         3: "En route or born on arrival (BOA)", 9: "Not classifiable"
     }
-    positions = {
-        x: (80, 80) for x in
-        (Y1978, Y1979, Y1980, Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
-    }
+    positions = _span(Y1978, Y1988, 80)
 
 
 class PlaceOfDelivery1975(Source):
@@ -501,7 +434,7 @@ class PlaceOfDelivery1975(Source):
         1: "Hospital or Institution", 2: "Clinic, Center, or a Home",
         3: "Names places (Drs. Offices)", 4: "Street Address", 9: "Not classifiable"
     }
-    positions = {x: (80, 80) for x in (Y1975, Y1976, Y1977)}
+    positions = _span(Y1975, Y1977, 80)
 
 
 class AttendantAtBirth(Source):
@@ -512,10 +445,7 @@ class AttendantAtBirth(Source):
     }
     positions = {
         Y1968: (58, 58),
-        **{
-            x: (36, 36) for x in
-            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977)
-        }
+        **_span(Y1969, Y1977, 36)
     }
 
 
@@ -533,20 +463,9 @@ class AgeOfMother(Source, Target):
     pd_type = float
     positions = {
         Y1968: (38, 39),
-        **{
-            x: (41, 42) for x in
-            (Y1969, Y1970, Y1971, Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978,
-             Y1979, Y1980, Y1981, Y1982, Y1983, Y1984, Y1985, Y1986, Y1987, Y1988)
-        },
-        **{
-            x: (70, 71) for x in
-            (Y1989, Y1990, Y1991)
-        },
-        **{
-            x: (91, 92) for x in
-            (Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998, Y1999,
-             Y2000, Y2001, Y2002)
-        },
+        **_span(Y1969, Y1988, 41, 42),
+        **_span(Y1989, Y1990, 70, 71),
+        **_span(Y1991, Y2002, 91, 92),
         Y2003: (77, 78)
     }
 
@@ -573,10 +492,7 @@ class AgeOfMother41(Source):
     }
 
     positions = {
-        **{
-            x: (72, 73) for x in
-            (Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998, Y1999, Y2000, Y2001, Y2002)
-        },
+        **_span(Y1991, Y2002, 72, 73),
         Y2003: (89, 90)
     }
 
@@ -593,14 +509,90 @@ class AgeOfMother50(Source):
     }
 
     positions = {
-        **{
-            x: (89, 90) for x in
-            (Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011, Y2012, Y2013)
-        },
-        **{
-            x: (75, 76) for x in
-            (Y2014, Y2015, Y2016, Y2017, Y2018, Y2019)
-        }
+        **_span(Y2004, Y2013, 89, 90),
+        **_span(Y2014, Y2019, 75, 76)
+    }
+
+
+class Parity(Target):
+    """
+    Parity
+
+    The number of times that the mother has been pregnant and carried the
+    the pregnancy to a viable gestational age (including this one).
+    """
+    pd_type = float
+
+    @classmethod
+    def remap(cls, data_frame: pd.DataFrame, **kwargs):
+        return data_frame[BirthOrderDetail.name()].combine_first(
+            data_frame[BirthOrderRecode.name()].replace({8: None, 9: None})
+        )
+
+
+class ChildrenBornAlive(Source):
+    """
+    Number of children born alive, now living
+
+    Sum of all previous live births (now living and now dead) plus this one.
+    """
+    handler = Handlers.integer
+    na_value = 99
+    positions = {
+        Y1968: (47, 48),
+        **_span(Y1969, Y1988, 52, 53),
+        **_span(Y1989, Y2002, 100, 101),
+        **_span(Y2003, Y2005, 210, 211)
+    }
+
+
+class ChildrenBornAlive06(ChildrenBornAlive):
+    """
+    Number of children born alive, now living recode
+
+    A recode of detail values.
+
+    1-7 Live birth order
+    8 Live birth order of 8 or more
+    9 Unknown or not stated
+    """
+    na_value = 9
+    positions = {
+        **_span(Y2006, Y2013, 212),
+        **_span(Y2014, Y2019, 179)
+    }
+
+
+class BirthOrderDetail(Source):
+    """
+    Total Birth Order
+
+    Sum of all previous pregnancies plus this one
+    """
+    handler = Handlers.integer
+    na_value = 99
+    positions = {
+        **_span(Y1969, Y1988, 58, 59),
+        **_span(Y1989, Y2002, 103, 104),
+        **_span(Y2003, Y2005, 215, 216)
+    }
+
+
+class BirthOrderRecode(BirthOrderDetail):
+    """
+    Total Birth Order recode
+
+    Sum of all previous pregnancies plus this one
+
+    1-7 Total birth order
+    8 Total birth order of 8 or more
+    9 Unknown or not stated
+    """
+    handler = Handlers.integer
+    na_value = 9
+    positions = {
+        **_span(Y2006, Y2013, 217),
+        **_span(Y2014, Y2019, 182)
     }
 
 
@@ -623,11 +615,7 @@ class Births(Source, Target):
 
     pd_type = 'uint32'
     handler = Handlers.integer
-    positions = {
-        x: (208, 208) for x in
-        (Y1972, Y1973, Y1974, Y1975, Y1976, Y1977, Y1978, Y1979,
-         Y1980, Y1981, Y1982, Y1983, Y1984)
-    }
+    positions = _span(Y1972, Y1984, 208)
 
     @classmethod
     def remap(cls, data_frame: pd.DataFrame, **kwargs):

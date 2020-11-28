@@ -29,10 +29,10 @@ setuptools.setup(
     python_requires=">=3.8",
     install_requires=[
       'pandas>=1.1',
-      'pyarrow'
+      'pyarrow',
+      'tqdm'
     ],
     extras_require={
-        'Prep': ['tqdm'],
         'Testing': [
             'pytest', 'pytest-mock', 'pytest-cov',
             'rumydata>=0.5.2'

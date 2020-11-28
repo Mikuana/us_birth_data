@@ -5,6 +5,7 @@ from us_birth_data._utils import _recurse_subclasses
 from us_birth_data.files import YearData
 
 original_columns = _recurse_subclasses(fields.Source)
+original_columns = [x for x in original_columns if x != fields._UmeColumn]
 
 
 class Xyz(fields.Source):
@@ -53,15 +54,20 @@ def test_parse_from_row():
 @pytest.mark.parametrize('column', original_columns)
 def test_positions_map(column):
     """ All original columns need to map positions to years """
-    if column != fields.UmeColumn:
-        assert all([issubclass(k, YearData) for k in column.positions.keys()])
+    assert all([issubclass(k, YearData) for k in column.positions.keys()])
 
 
 @pytest.mark.parametrize('column', original_columns)
 def test_positions_range(column):
     """ All original columns need to map positions to years """
-    if column != fields.UmeColumn:
-        for v in column.positions.values():
-            assert isinstance(v, tuple)
-            assert len(v) == 2
-            assert v[0] <= v[1]
+    for v in column.positions.values():
+        assert isinstance(v, tuple)
+        assert len(v) == 2
+        assert v[0] <= v[1]
+
+
+@pytest.mark.parametrize('column', original_columns)
+def test_contiguous_spans(column):
+    actual = sorted([y.year for y in column.positions])
+    expected = list(range(min(actual), max(actual) + 1))
+    assert actual == expected

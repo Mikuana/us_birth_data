@@ -24,7 +24,7 @@ pip install us_birth_data
 
 ```python
 import us_birth_data as usb
-df = usb.load_data()
+df = usb.load_full_data()
 print(df)
 ```
 

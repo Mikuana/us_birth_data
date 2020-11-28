@@ -1,0 +1,14 @@
+{
+  "year.parquet": "sha256::184e0ef78326aa08803d2d41434a1a394a7fac33c4f44406836ab92e7579d76e",
+  "month.parquet": "sha256::5fc28e038c1b3e5923d3d911080d7784044e9e5d91ac75d59570b0919907cdd2",
+  "day_of_week.parquet": "sha256::5869510afc31c1465d906593f525525e1f08004379a5e7e810a544912703eb3c",
+  "state.parquet": "sha256::534b50c97a41e1641e597cd006af7b285ac3d387717ec7f4edd74cd4f76e084d",
+  "delivery_method.parquet": "sha256::3c78d4d980f569c611eba23f61727a4b6d8f74acc0063e05544a5ac757a1fd76",
+  "sex_of_child.parquet": "sha256::ccf354e17cef00452337ed1451377f66d9020874addf7a8b383a99e701a1f0a1",
+  "birth_facility.parquet": "sha256::2742c7b59479d83d9f960944d2cfeed8b023f121cfb75abd1853a6634f3ec53d",
+  "age_of_mother.parquet": "sha256::9850db360e8b3d909aded97f610ed13eca8fbef4b200c9d0b4c856ecd3faddd7",
+  "parity.parquet": "sha256::2de7ae2d0c143b51431abb4246f38cbcbfb750915a87b0b331a9aad90316bfa5",
+  "births.parquet": "sha256::491e055cd856ceac7d31d09d6453a1be662b13962e647484f05f4e0949f2cfd5",
+  "us_birth_data.parquet": "sha256::be704cd27494e36e48c2d0f462fa195d3d1f5cf07acad43f82838ec714f1d199",
+  "us_birth_data.parquet.gz": "sha256::780a81d229d8323ccf1abaf316ebbb42b1d527adc4209d8a762bb123fafb5d3e"
+}
