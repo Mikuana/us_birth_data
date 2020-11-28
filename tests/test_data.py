@@ -7,14 +7,24 @@ from rumydata import Layout
 from rumydata.field import Integer, Choice, Text, Field, Currency
 from rumydata.rules.cell import make_static_cell_rule
 
-from us_birth_data.fields import targets, Target
 from us_birth_data import Year, Births
 from us_birth_data import files
+from us_birth_data.fields import targets, Target
 
-gt0 = make_static_cell_rule(lambda x: int(x) > 0, 'greater than 0')
-after1968 = make_static_cell_rule(lambda x: int(x) >= 1968, '1968 is earliest available data')
-no_future = make_static_cell_rule(lambda x: int(x) <= date.today().year, 'must be past or present year')
-can_truncate_to_int = make_static_cell_rule(lambda x: int(float(x)) == float(x), 'must be a integer without decimal')
+gt0 = make_static_cell_rule(
+    lambda x: int(x) > 0, 'greater than 0'
+)
+after1968 = make_static_cell_rule(
+    lambda x: int(x) >= 1968, '1968 is earliest available data'
+)
+no_future = make_static_cell_rule(
+    lambda x: int(x) <= date.today().year,
+    'must be past or present year'
+)
+can_truncate_to_int = make_static_cell_rule(
+    lambda x: int(float(x)) == float(x),
+    'must be a integer without decimal'
+)
 
 layout = Layout({
     'year': Integer(4, 4, rules=[after1968, no_future]),
