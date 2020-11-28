@@ -49,7 +49,7 @@ def download_full_data(destination: [Union, str] = None) -> Path:
     from us_birth_data import __version__ as v
     destination = destination or full_data
     url = 'https://github.com/Mikuana/us_birth_data/releases/download/'
-    url += f'{semver.parse_version_info(v).replace(patch=0)}/{gzip_data.name}'
+    url += f'v{semver.parse_version_info(v).replace(patch=0)}/{gzip_data.name}'
     with TemporaryDirectory() as td:
         gzp = Path(td, gzip_data.stem)
 
