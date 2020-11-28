@@ -3,10 +3,11 @@ from hashlib import sha256
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List, Union
-from urllib import request, error
 
 import pandas as pd
+import requests
 import semver
+from tqdm import tqdm
 
 from us_birth_data.data import full_data, gzip_data, hashes
 from us_birth_data.fields import Target
@@ -51,11 +52,21 @@ def download_full_data(destination: [Union, str] = None) -> Path:
     url = 'https://github.com/Mikuana/us_birth_data/releases/download/'
     url += f'v{semver.parse_version_info(v).replace(patch=0)}/{gzip_data.name}'
     with TemporaryDirectory() as td:
-        gzp = Path(td, gzip_data.stem)
-
+        gzp = Path(td, gzip_data.name)
         try:
-            request.urlretrieve(url, gzp)
-        except error.HTTPError as te:
+            print('Downloading from URL:\n' + url)
+            response = requests.get(url, stream=True)
+            tqdm_kwargs = dict(
+                total=int(response.headers.get('content-length', 0)),
+                desc=gzp.name,
+                miniters=1
+            )
+            with gzp.open('wb') as f:
+                with tqdm.wrapattr(f, "write", **tqdm_kwargs) as stream:
+                    for chunk in response.iter_content(chunk_size=4096):
+                        stream.write(chunk)
+
+        except requests.HTTPError as te:
             print(f'Received HTTP error while attempting to download {url}')
             raise te
 

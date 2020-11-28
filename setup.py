@@ -30,6 +30,7 @@ setuptools.setup(
     install_requires=[
       'pandas>=1.1',
       'pyarrow',
+      'requests',
       'semver',
       'tqdm'
     ],
