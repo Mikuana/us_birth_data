@@ -19,6 +19,14 @@ version 3.8 or higher.::
     pip install us_birth_data
 
 
+
+Use the `download_full_data` command after installation to obtain the data from
+the GitHub repo where the source code is hosted.::
+
+    from us_birth_data import download_full_data
+    download_full_data()
+
+
 Use
 ###
 
@@ -28,19 +36,18 @@ with the `load_data` method. This returns a `pandas.DataFrame` object. ::
     >>> import us_birth_data as usb
     >>> usb.load_data()
 
-        year      month day_of_week    state  births
-    0   1968      April         NaN  Alabama    4838
-    1   1968     August         NaN  Alabama    5754
-    2   1968   December         NaN  Alabama    5490
-    3   1968   February         NaN  Alabama    4916
-    4   1968    January         NaN  Alabama    5172
-    ..   ...        ...         ...      ...     ...
-    79  2015  September     Saturday      NaN   36236
-    80  2015  September      Sunday      NaN   31619
-    81  2015  September    Thursday      NaN   53171
-    82  2015  September     Tuesday      NaN   65511
-    83  2015  September   Wednesday      NaN   64926
-    [442944 rows x 5 columns]
+            year      month day_of_week  ... age_of_mother parity births
+    0       1968      April         NaN  ...          13.0    NaN      2
+    1       1968      April         NaN  ...          14.0    NaN     10
+    2       1968      April         NaN  ...          15.0    NaN     22
+    3       1968      April         NaN  ...          16.0    NaN     56
+    4       1968      April         NaN  ...          17.0    NaN    102
+          ...        ...         ...  ...           ...    ...    ...
+    100279  2019  September   Wednesday  ...          27.0    3.0      1
+    100280  2019  September   Wednesday  ...          28.0    NaN      1
+    100281  2019  September   Wednesday  ...          30.0    7.0      1
+    100282  2019  September   Wednesday  ...          35.0    NaN      1
+    100283  2019  September   Wednesday  ...          36.0    NaN      1
 
 
 More targeted use of the data would be to load only the columns that are needed.

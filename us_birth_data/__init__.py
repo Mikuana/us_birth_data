@@ -16,7 +16,7 @@ from us_birth_data.fields import (
 )
 from us_birth_data.final import load_full_data, download_full_data
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 __all__ = [
     'Year', 'Month', 'DayOfWeek', 'State', 'DeliveryMethod',
