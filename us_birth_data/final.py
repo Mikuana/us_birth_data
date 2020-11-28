@@ -6,6 +6,7 @@ from typing import List, Union
 from urllib import request, error
 
 import pandas as pd
+import semver
 
 from us_birth_data.data import full_data, gzip_data, hashes
 from us_birth_data.fields import Target
@@ -48,7 +49,7 @@ def download_full_data(destination: [Union, str] = None) -> Path:
     from us_birth_data import __version__ as v
     destination = destination or full_data
     url = 'https://github.com/Mikuana/us_birth_data/releases/download/'
-    url += f'{v}/{gzip_data.name}'
+    url += f'{semver.parse_version_info(v).replace(patch=0)}/{gzip_data.name}'
     with TemporaryDirectory() as td:
         gzp = Path(td, gzip_data.stem)
 
