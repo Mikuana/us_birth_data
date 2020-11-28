@@ -27,7 +27,11 @@ def load_full_data(columns: List[Union[str, Target]] = None, **kwargs) -> pd.Dat
     if columns:
         columns = [c.name() if issubclass(c, Target) else c for c in columns]
 
-    assert full_data.exists(), f"File {full_data.as_posix()} does not exist. Download it."
+    msg = (
+        f"File {full_data.as_posix()} does not exist. You can download it using"
+        f" the download_full_data method included in this package."
+    )
+    assert full_data.exists(), msg
     return pd.read_parquet(path=full_data, columns=columns, **kwargs)
 
 
