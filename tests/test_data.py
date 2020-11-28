@@ -10,6 +10,7 @@ from rumydata.rules.cell import make_static_cell_rule
 from us_birth_data import Year, Births
 from us_birth_data import files
 from us_birth_data.fields import targets, Target
+from us_birth_data.data import hashes
 
 gt0 = make_static_cell_rule(
     lambda x: int(x) > 0, 'greater than 0'
@@ -63,3 +64,7 @@ def test_total_count(annual_data):
     year_sum = sum([x.births for x in files.YearData.__subclasses__()])
     data_sum = annual_data[Births.name()].sum()
     assert year_sum == data_sum
+
+
+def test_hashes():
+    assert isinstance(hashes, dict)
